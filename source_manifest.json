@@ -1,0 +1,193 @@
+{
+  "version": "v0.2.0-preview.1",
+  "date": "2026-11-04",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 34,
+      "sha256": "04db0c2dfdedba3c2110318be154a317e10e83b1d6c87902347d789365255a6e"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 458,
+      "sha256": "d95c555eb05f9ddbc744000559015dba1a1368627a045f42a388902692a52d83"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 987,
+      "sha256": "3ee649377bd5b00bf70956a517f517bd765916fc423556c757c18b77dbb00491"
+    },
+    {
+      "path": "orcad-assistant/app.py",
+      "bytes": 37925,
+      "sha256": "b2f65155bb09c11e50f827fd17433c0efdb4952343470028f40ad3df6135e814"
+    },
+    {
+      "path": "orcad-assistant/assistant_core.py",
+      "bytes": 25448,
+      "sha256": "f135559109ca32eb0cf8f34fd0e754aa38e63e330b9576628fbf7e4608178636"
+    },
+    {
+      "path": "orcad-assistant/build_pipeline.py",
+      "bytes": 15762,
+      "sha256": "8dd8b491bbbe108fe7ae0dee3a7bc238e08e8206a2ae2202476bf36d0bc52aa8"
+    },
+    {
+      "path": "orcad-assistant/cli.py",
+      "bytes": 1124,
+      "sha256": "fc127ff7f29ca177c3988815ad81cc42a63b8f5a6c26adfcefb51670994fe6a5"
+    },
+    {
+      "path": "orcad-assistant/examples/GC4693_ballmap.csv",
+      "bytes": 506,
+      "sha256": "b645cb6d08dace4b6e50f603f9982948a6c043273ce7542a226459cae2612077"
+    },
+    {
+      "path": "orcad-assistant/footprint_pipeline.py",
+      "bytes": 28737,
+      "sha256": "cb3e67447c440f3d242baa187a57119dbd94753e21eceff91f48049f7f57f8f8"
+    },
+    {
+      "path": "orcad-assistant/gui_selftest.py",
+      "bytes": 7434,
+      "sha256": "a15ee737296406c8cad86e3acf09f06d9231537b5ef73aa07761e45a0e177d52"
+    },
+    {
+      "path": "orcad-assistant/make_gc4693_footprint.py",
+      "bytes": 404,
+      "sha256": "905e1a21e7ff16cba9cbda1da151cd205a25982992c59d8d3e9b38e99a90f64a"
+    },
+    {
+      "path": "orcad-assistant/make_test_fixture.py",
+      "bytes": 726,
+      "sha256": "0551be506610f6a6a30d3eab27e97c2595c479526bb9818cbf13e83b38ffe936"
+    },
+    {
+      "path": "orcad-assistant/modern_ui.py",
+      "bytes": 12892,
+      "sha256": "c076237420a02c4899181693ccaf3877b68f633d5dd10ba8a917aaf2bfa41e30"
+    },
+    {
+      "path": "orcad-assistant/native_drop.py",
+      "bytes": 2636,
+      "sha256": "b46f269e79b217e3a825f623c7a5ceb657cc0bf8dd2d2597ee20f20f80db8b31"
+    },
+    {
+      "path": "orcad-assistant/ocr_windows.ps1",
+      "bytes": 2029,
+      "sha256": "50b221c57501ab6a5b148ca06b259a5d488d721fa5dfbbfd0269fcb652bf7afb"
+    },
+    {
+      "path": "orcad-assistant/pcb_workflow.py",
+      "bytes": 9828,
+      "sha256": "5145ac85899bab9da0a66e39928a7fd7860d7949dc2665f581857a18c181edb4"
+    },
+    {
+      "path": "orcad-assistant/README.md",
+      "bytes": 359,
+      "sha256": "79cfe78dd54e952c9f55e24344f79143d1480e23d28e92c66140b7292fc5d922"
+    },
+    {
+      "path": "orcad-assistant/reference_layout.py",
+      "bytes": 7684,
+      "sha256": "7a5c61d279f6c26cdd110872462b483ec37c36628819a4082444cede13fb21d0"
+    },
+    {
+      "path": "orcad-assistant/requirements.txt",
+      "bytes": 126,
+      "sha256": "f59d1380bd789605aab0c732135651764c144e940bcc67545ab480d346d16839"
+    },
+    {
+      "path": "orcad-assistant/templates/footprint/blank_symbol.dra",
+      "bytes": 138092,
+      "sha256": "85a63d1697957c908bd13f7139f737b1c69af4e03a9f484d3ccb505643740a8e"
+    },
+    {
+      "path": "orcad-assistant/templates/footprint/drawing.py",
+      "bytes": 2733,
+      "sha256": "c80131c677387b7e99a7e4ba64baef3f9ec83e4dd2560b383b6af8f2c4c2b34a"
+    },
+    {
+      "path": "orcad-assistant/templates/footprint/gc4693.json",
+      "bytes": 2128,
+      "sha256": "5fa15a4d712b02c08fa1a3835617e8d0c5af7143f20d3ff361bd4b11aef47252"
+    },
+    {
+      "path": "orcad-assistant/templates/footprint/reference_generator.py",
+      "bytes": 39326,
+      "sha256": "92daaa736b696abc1e7c8aae92f5cf3379863cd846693c8a37457fadf360be4e"
+    },
+    {
+      "path": "orcad-assistant/templates/gen_sensor_symbol.py",
+      "bytes": 16884,
+      "sha256": "16a11cdedef77d3aadb5935ece8a5e161c134fbf18bc8b12ca6508e0499f925b"
+    },
+    {
+      "path": "orcad-assistant/tests/test_center_annotations.py",
+      "bytes": 1257,
+      "sha256": "c0161d313d2dbe6202c5ac05a7e9af2576a00dd41afd0053a62af6f67b2b46df"
+    },
+    {
+      "path": "orcad-assistant/tests/test_footprint.py",
+      "bytes": 3535,
+      "sha256": "0e77c18991adaba2809cc4458cdd447adb8c3caf20a003917e45d1530cd9e693"
+    },
+    {
+      "path": "orcad-assistant/tests/test_pcb_workflow.py",
+      "bytes": 4867,
+      "sha256": "55b7d25c6e29c70dc01ec7863691a9dec9f60fbf86b50d2443929ae22b5c3dfc"
+    },
+    {
+      "path": "orcad-assistant/tests/test_web_progress.py",
+      "bytes": 1688,
+      "sha256": "6d0c1a34e279356fdbe464b97b263037a74aa4a2442867a68a3b6bb4b47ea0b7"
+    },
+    {
+      "path": "orcad-assistant/tests/test_workflow.py",
+      "bytes": 9928,
+      "sha256": "cd5362d6a17529fdedd3f5cfd2cca21ac2965ed975fa0e56465d041e6f43511a"
+    },
+    {
+      "path": "orcad-assistant/validate_orcad.py",
+      "bytes": 1283,
+      "sha256": "54b834f953e1980501b2394c9805ea60b630144023f95d0e79bd7a1353a5d7d2"
+    },
+    {
+      "path": "orcad-assistant/web/index.html",
+      "bytes": 35792,
+      "sha256": "29f18527982549d80a726d9f2bfd9eb204e942f351d40b67d20993fd246e8617"
+    },
+    {
+      "path": "orcad-assistant/web/pcb-preview.js",
+      "bytes": 4989,
+      "sha256": "936a1b1a861a151decabd1aca58ee852bfdeb478f54d8856b8d41c95b900a05f"
+    },
+    {
+      "path": "orcad-assistant/web_app.py",
+      "bytes": 16266,
+      "sha256": "0e54b5f0630388e2bbfea0c8ccf66f1bad720d35170b9f3c3592cb8bff727164"
+    },
+    {
+      "path": "README.md",
+      "bytes": 8337,
+      "sha256": "de36e3be00e8cef6d1f8044fc5dcb7a33cef1601600eff3d3a9f5840151c10e3"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "bytes": 54,
+      "sha256": "7edd93de097f2b03b5125c19a7d151f9c525d227148d4a7c8040da33b879af28"
+    },
+    {
+      "path": "启动符号助手.cmd",
+      "bytes": 349,
+      "sha256": "b1e95163c61353586458cd9195fe8616c80b4181b8f86695cf25bda77c8b9175"
+    }
+  ],
+  "excludes": [
+    "user PDFs",
+    "workspace sessions",
+    "generated libraries",
+    "local dependencies",
+    "upload tools"
+  ]
+}

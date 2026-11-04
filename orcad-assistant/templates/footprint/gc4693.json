@@ -1,0 +1,58 @@
+{
+  "_readme": [
+    "GC4693-C35YA / SHSAE-4M-3054 4Mega CMOS Image Sensor, 35-ball CSP.",
+    "数据源: GC4693-C35YA CSP Datasheet V1.0, Table 8 (p14-15), Top View(Bumps Down).",
+    "坐标: 原点=本体重心, +Y 向上 (数据手册 Top View, A 行在上), 单位 mm.",
+    "硬约束(脚本会断言):",
+    "  left_to_col1 + (cols-1)*pitch[0] + right_to_colN == body[0]  -> 1.04257+6*0.640+0.92243=5.805 OK",
+    "  top_to_rowA  + (rows-1)*pitch[1] + bottom_to_rowN == body[1] -> 0.70215+4*0.580+0.61285=3.635 OK",
+    "  centers.BGA == (col1_x+colN_x)/2, (rowA_y+rowN_y)/2 == (+0.06007,-0.04465) OK",
+    "边距归属判定: p14 的 S1/S3 标在背视图；转为顶视图后 left=S3、right=S1，X=+0.06007 mm。p15 负号备注与顶视图冲突。",
+    "             BGA-Y=(bottom-top)/2=(0.61285-0.70215)/2=-0.04465 -> top=S2, bottom=S4.",
+    "工艺假设(用户可按厂规调整): ball D0.250 -> NSMD pad D0.200 (~80%), mask 开窗=pad+2*0.0508=0.3016 (比 PAD 大 4mil), paste=0.200, courtyard 外扩 0.25."
+  ],
+  "name": "GC4693_CSP35_REVIEW",
+  "descr": "35-ball CSP CMOS image sensor (GC4693-C35YA), origin = package body center",
+  "body": [
+    5.805,
+    3.635
+  ],
+  "pitch": [
+    0.64,
+    0.58
+  ],
+  "edge": {
+    "left_to_col1": 1.04257,
+    "right_to_colN": 0.92243,
+    "top_to_rowA": 0.70215,
+    "bottom_to_rowN": 0.61285
+  },
+  "rows": "ABCDE",
+  "cols": 7,
+  "missing": [],
+  "ball_dia": 0.25,
+  "pad_dia": 0.2,
+  "mask_margin": 0.0508,
+  "paste_dia": 0.2,
+  "courtyard_excess": 0.25,
+  "height_nominal": 0.670,
+  "height_min": 0.610,
+  "height_max": 0.730,
+  "height_source": "GC4693-C35YA CSP Datasheet V1.0, p14, Table 8, Package Height C; mm",
+  "centers": {
+    "BGA": [
+      0.06007,
+      -0.04465
+    ],
+    "OPT": [
+      0.06007,
+      -0.04465
+    ]
+  },
+  "orientation_source": "GC4693 p14 TOP VIEW; S3 left, S1 right; X=+0.06007 mm",
+  "kicad_version": 6,
+  "process_profile": {
+    "source": "User reference kit 20261103; process assumptions, not manufacturer recommendation",
+    "status": "review_required"
+  }
+}

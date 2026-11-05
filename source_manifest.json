@@ -1,6 +1,6 @@
 {
-  "version": "v0.2.0-preview.1",
-  "date": "2026-11-04",
+  "version": "v0.2.0-preview.2",
+  "date": "2026-11-05",
   "files": [
     {
       "path": ".gitattributes",
@@ -14,8 +14,23 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 987,
-      "sha256": "3ee649377bd5b00bf70956a517f517bd765916fc423556c757c18b77dbb00491"
+      "bytes": 1344,
+      "sha256": "07f41dc3a549241527f15670fa703e35c00855105fd341d9fd88b8de665e895b"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 3828,
+      "sha256": "325759b68d203f547d755e046d0c7bed257e8a47d308eb793689ebc882827824"
+    },
+    {
+      "path": "README.md",
+      "bytes": 9133,
+      "sha256": "f8f88dc60b135e36e04501a2586b748a9ae2f7ad7080dbec901cb61183a24b2b"
+    },
+    {
+      "path": "orcad-assistant/README.md",
+      "bytes": 359,
+      "sha256": "79cfe78dd54e952c9f55e24344f79143d1480e23d28e92c66140b7292fc5d922"
     },
     {
       "path": "orcad-assistant/app.py",
@@ -81,11 +96,6 @@
       "path": "orcad-assistant/pcb_workflow.py",
       "bytes": 9828,
       "sha256": "5145ac85899bab9da0a66e39928a7fd7860d7949dc2665f581857a18c181edb4"
-    },
-    {
-      "path": "orcad-assistant/README.md",
-      "bytes": 359,
-      "sha256": "79cfe78dd54e952c9f55e24344f79143d1480e23d28e92c66140b7292fc5d922"
     },
     {
       "path": "orcad-assistant/reference_layout.py",
@@ -168,11 +178,6 @@
       "sha256": "0e54b5f0630388e2bbfea0c8ccf66f1bad720d35170b9f3c3592cb8bff727164"
     },
     {
-      "path": "README.md",
-      "bytes": 8337,
-      "sha256": "de36e3be00e8cef6d1f8044fc5dcb7a33cef1601600eff3d3a9f5840151c10e3"
-    },
-    {
       "path": "requirements-dev.txt",
       "bytes": 54,
       "sha256": "7edd93de097f2b03b5125c19a7d151f9c525d227148d4a7c8040da33b879af28"
@@ -189,5 +194,6 @@
     "generated libraries",
     "local dependencies",
     "upload tools"
-  ]
+  ],
+  "license": "LicenseRef-GPT-ORCAD-SYMBLE-Noncommercial-1.0"
 }

@@ -1,5 +1,5 @@
 {
-  "version": "v0.2.0-preview.2",
+  "version": "v0.2.0-preview.3",
   "date": "2026-11-05",
   "files": [
     {
@@ -14,8 +14,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 1344,
-      "sha256": "07f41dc3a549241527f15670fa703e35c00855105fd341d9fd88b8de665e895b"
+      "bytes": 2522,
+      "sha256": "5ee012393b47bd7e15617f422ea9c8eb783afb6e24e025058ec243422ca6b0e0"
     },
     {
       "path": "LICENSE",
@@ -24,8 +24,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 9133,
-      "sha256": "f8f88dc60b135e36e04501a2586b748a9ae2f7ad7080dbec901cb61183a24b2b"
+      "bytes": 10848,
+      "sha256": "f7f7bb8878463a6f8b363df999bd125c0ade62c1c4f7198128ec612831492324"
     },
     {
       "path": "orcad-assistant/README.md",
@@ -39,8 +39,8 @@
     },
     {
       "path": "orcad-assistant/assistant_core.py",
-      "bytes": 25448,
-      "sha256": "f135559109ca32eb0cf8f34fd0e754aa38e63e330b9576628fbf7e4608178636"
+      "bytes": 28518,
+      "sha256": "9aba180672ff5f67644673a8d0b2c57ff1b8613f8568a7ad2dd07378c4da557a"
     },
     {
       "path": "orcad-assistant/build_pipeline.py",
@@ -94,8 +94,8 @@
     },
     {
       "path": "orcad-assistant/pcb_workflow.py",
-      "bytes": 9828,
-      "sha256": "5145ac85899bab9da0a66e39928a7fd7860d7949dc2665f581857a18c181edb4"
+      "bytes": 10932,
+      "sha256": "2ea40d757864460a5f13fdb1ec36234dc6b0f3f5869d314b266969682b5c025d"
     },
     {
       "path": "orcad-assistant/reference_layout.py",
@@ -129,8 +129,8 @@
     },
     {
       "path": "orcad-assistant/templates/gen_sensor_symbol.py",
-      "bytes": 16884,
-      "sha256": "16a11cdedef77d3aadb5935ece8a5e161c134fbf18bc8b12ca6508e0499f925b"
+      "bytes": 17866,
+      "sha256": "4acc1f5b3e14357d06bd89092c488e4c64d3417f873dce7f4c95d83047adc163"
     },
     {
       "path": "orcad-assistant/tests/test_center_annotations.py",
@@ -144,8 +144,13 @@
     },
     {
       "path": "orcad-assistant/tests/test_pcb_workflow.py",
-      "bytes": 4867,
-      "sha256": "55b7d25c6e29c70dc01ec7863691a9dec9f60fbf86b50d2443929ae22b5c3dfc"
+      "bytes": 6246,
+      "sha256": "22044ab7a68b247114ef757fbfbbe90f77feeb0e2c53e97205585c403847cedb"
+    },
+    {
+      "path": "orcad-assistant/tests/test_symbol_geometry.py",
+      "bytes": 4754,
+      "sha256": "4eb27738bbcd8c189116d8e5f59db5bfd86d76e18868ed7ecc849e946008423a"
     },
     {
       "path": "orcad-assistant/tests/test_web_progress.py",
@@ -164,8 +169,8 @@
     },
     {
       "path": "orcad-assistant/web/index.html",
-      "bytes": 35792,
-      "sha256": "29f18527982549d80a726d9f2bfd9eb204e942f351d40b67d20993fd246e8617"
+      "bytes": 43328,
+      "sha256": "ad3bbf132e4a50f3609a8d63339c9df7cd2bd14febed28ca3ff53d9955d5e68d"
     },
     {
       "path": "orcad-assistant/web/pcb-preview.js",
@@ -174,13 +179,18 @@
     },
     {
       "path": "orcad-assistant/web_app.py",
-      "bytes": 16266,
-      "sha256": "0e54b5f0630388e2bbfea0c8ccf66f1bad720d35170b9f3c3592cb8bff727164"
+      "bytes": 16664,
+      "sha256": "95c785acba6c443326c80a4356b047155a82d3914c7664d76ba8645e8f558c91"
     },
     {
       "path": "requirements-dev.txt",
       "bytes": 54,
       "sha256": "7edd93de097f2b03b5125c19a7d151f9c525d227148d4a7c8040da33b879af28"
+    },
+    {
+      "path": "原理符号手动布局说明.md",
+      "bytes": 2637,
+      "sha256": "54a0d58c63887778c3de25026805dd0f4854b7eee10ee331d8291ca28925bba9"
     },
     {
       "path": "启动符号助手.cmd",

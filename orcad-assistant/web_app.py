@@ -176,6 +176,8 @@ class Workspace:
                         core.auto_layout(candidate)
                 elif action=='relayout':
                     core.auto_layout(candidate)
+                elif action=='symbol-geometry':
+                    core.edit_symbol_geometry(candidate,self.env,data)
                 elif action=='split':
                     core.split_parts(candidate,int(data.get('maximum',64)))
                 elif action=='merge':
@@ -186,12 +188,15 @@ class Workspace:
                 elif action=='edit':
                     pin = next(p for p in candidate['pins'] if p['id']==data['id'])
                     values = data['values']
+                    if any(k in values and str(values[k]).strip()!=pin[k] for k in ('side','part')):
+                        candidate.pop('symbol_layout',None)
                     for key in ('name','type','side','group','part'):
                         if key in values:
                             pin[key] = str(values[key]).strip()
                     if pin['type'] not in core.TYPES or pin['side'] not in core.SIDES or pin['part'] not in candidate['parts']:
                         raise ValueError('请选择有效的类型、位置和 PART')
                 elif action=='move':
+                    candidate.pop('symbol_layout',None)
                     pin = next(p for p in candidate['pins'] if p['id']==data['id'])
                     if data['side'] not in core.SIDES:
                         raise ValueError('位置无效')
@@ -208,6 +213,7 @@ class Workspace:
                     from reference_layout import apply
                     if not self.reference:
                         raise ValueError('没有待应用的截图结果')
+                    candidate.pop('symbol_layout',None)
                     apply(candidate,self.reference['result'],self.reference['part'])
                     self.reference = None
                 else:

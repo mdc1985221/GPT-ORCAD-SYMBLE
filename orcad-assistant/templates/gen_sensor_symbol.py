@@ -204,9 +204,10 @@ def build(config, output_dir='.', dry_run=False):
     bot_x0 = ((W - bot_span) // (2 * PITCH)) * PITCH
     left_y0 = ((H - left_span) // (2 * PITCH)) * PITCH
     right_y0 = ((H - right_span) // (2 * PITCH)) * PITCH
-    if min(left_y0, right_y0) < Y0 or max(left_y0 + left_span, right_y0 + right_span) > H - Y0:
+    manual = D.get('MANUAL_PINS', {})
+    if not manual and (min(left_y0, right_y0) < Y0 or max(left_y0 + left_span, right_y0 + right_span) > H - Y0):
         raise ValueError('左右引脚超出上下净空，请增大外框高度')
-    if min(top_x0, bot_x0) < 60 or max(top_x0 + top_span, bot_x0 + bot_span) > W - 60:
+    if not manual and (min(top_x0, bot_x0) < 60 or max(top_x0 + top_span, bot_x0 + bot_span) > W - 60):
         raise ValueError('上下引脚超出左右净空，请增大外框宽度')
 
     if GROUPED:
@@ -219,6 +220,21 @@ def build(config, output_dir='.', dry_run=False):
                   + place_x_line(flatten(BOT), H, 1, bot_x0)
                   + place_y_line(flatten(LEFT), 0, -1, left_y0)
                   + place_y_line(flatten(RIGHT), W, 1, right_y0))
+
+    if manual:
+        if set(manual) != set(MASTER):
+            raise ValueError('手动布局必须覆盖当前 PART 的全部引脚，请重新自动排版')
+        placed=[]
+        for ball in LAYOUT_ORDER:
+            m=manual[ball];side=m['side'];v=m['offset']
+            limit=W if side in ('TOP','BOT') else H
+            if side not in ('TOP','BOT','LEFT','RIGHT') or not isinstance(v,int) or isinstance(v,bool) or v%10 or not 10<=v<=limit-10:
+                raise ValueError(f'{ball}：位置必须在框边内，且为 10 MIL 整数倍')
+            sx,sy={'TOP':(v,0),'BOT':(v,H),'LEFT':(0,v),'RIGHT':(W,v)}[side]
+            dx,dy={'TOP':(0,-30),'BOT':(0,30),'LEFT':(-30,0),'RIGHT':(30,0)}[side]
+            placed.append((ball,sx,sy,sx+dx,sy+dy))
+        if len({(p[3],p[4]) for p in placed})!=len(placed):
+            raise ValueError('引脚连接点重叠，请换一个 10 MIL 格点')
 
     pins = []
     for ball, sx, sy, hx, hy in placed:

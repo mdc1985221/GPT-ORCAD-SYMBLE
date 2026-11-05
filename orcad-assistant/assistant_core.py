@@ -75,6 +75,11 @@ def load_project(path):
         pin.setdefault('part', 'A')
     project.setdefault('parts', {'A': '主单元'})
     project.setdefault('references', [])
+    if project.get('symbol_layout'):
+        try:
+            section_layouts(project,DEFAULT_ENV)
+        except (KeyError,TypeError,ValueError) as exc:
+            raise ValueError('手动符号布局无效，请检查 10 MIL 格点、框尺寸和引脚重叠：'+str(exc)) from exc
     invalidate_legacy_pcb(project)
     return project
 
@@ -274,6 +279,7 @@ def signal_order(pin):
 
 
 def auto_layout(project):
+    project.pop('symbol_layout',None)
     pins = project['pins']
     if project['profile'] == 'simple':
         exposed = [p for p in pins if re.fullmatch(r'(?:EP|PAD)\d*', p['id'])]
@@ -376,14 +382,22 @@ def config(project, env):
     round20 = lambda n: math.ceil(n / 20) * 20
     width = round20(max(260, max(span('TOP'), span('BOT')) + 2 * margin_x, 2 * horizontal + 120))
     height = round20(max(260, max(span('LEFT'), span('RIGHT')) + 2 * margin_y, 2 * vertical + 120))
+    manual=project.get('symbol_layout',{})
+    if manual:
+        width,height=manual['frame']
+        if any(not isinstance(v,int) or isinstance(v,bool) or v<100 or v>32760 or v%10 for v in (width,height)):
+            raise ValueError('外框宽高必须是 100～32760 MIL 内的 10 MIL 整数倍')
     return dict(device=device, part_suffix='Normal', out_lib=device + '.OLB',
                 pcb_footprint=project['footprint'].strip(), ref_des='U',
                 src_lib=env['src_lib'].replace('\\', '/'), src_part=env['src_part'],
                 dll_path=env['dll'].replace('\\', '/'), tcl_pkg='DboTclWriteBasic',
-                layout_style='grouped', MASTER={p['id']: (p['name'], p['type']) for p in project['pins']},
+                layout_style='grouped', MASTER={p['id']: (
+                    manual.get('names',{}).get(p['id'],{}).get('resolved',p['name'])
+                    if manual.get('names',{}).get(p['id'],{}).get('base')==p['name'] else p['name'],p['type']) for p in project['pins']},
                 W=width, H=height, Y0=margin_y, PITCH=pitch, GAP=1,
                 REF_POS=(width // 2, height // 2 - 20), VAL_POS=(width // 2, height // 2 + 20),
-                DROP_BALLS=set(), DROP_NC=False, **groups)
+                DROP_BALLS=set(), DROP_NC=False,
+                MANUAL_PINS={p['id']:manual['pins'][p['id']] for p in project['pins']} if manual else {}, **groups)
 
 
 def layout(project, env):
@@ -406,6 +420,7 @@ def subproject(project, part):
 
 
 def split_parts(project, maximum=64):
+    project.pop('symbol_layout',None)
     if maximum < 8 or maximum > 500:
         raise ValueError('每个 PART 的脚数上限请设为 8～500')
     buckets = OrderedDict()
@@ -436,8 +451,13 @@ def split_parts(project, maximum=64):
 
 def section_layouts(project, env):
     # Resolve names globally before splitting, so duplicate power pins remain unique.
-    _, all_pins = layout(project, env)
+    naming_project=dict(project)
+    naming_project.pop('symbol_layout',None)
+    _, all_pins = layout(naming_project, env)
     names = {p[0]: p[1] for p in all_pins}
+    for pin in project['pins']:
+        saved=project.get('symbol_layout',{}).get('names',{}).get(pin['id'],{})
+        if saved.get('base')==pin['name']:names[pin['id']]=saved['resolved']
     sections = []
     for section in part_ids(project):
         part = subproject(project, section)
@@ -453,6 +473,38 @@ def section_layouts(project, env):
     for _, cfg in sections:
         cfg.update(W=width, H=height, REF_POS=(width//2,height//2-20), VAL_POS=(width//2,height//2+20))
     return [(section, cfg, generator.build(cfg, dry_run=True)) for section, cfg in sections]
+
+
+def edit_symbol_geometry(project, env, data):
+    """Freeze current section coordinates; edits remain on Capture's 10 mil grid."""
+    sections=section_layouts(project,env)
+    if not project.get('symbol_layout'):
+        positions={};names={};base_names={p['id']:p['name'] for p in project['pins']}
+        for _,cfg,pins in sections:
+            for pid,name,_,x,y,hx,hy in pins:
+                side='TOP' if hy<y else 'BOT' if hy>y else 'LEFT' if hx<x else 'RIGHT'
+                positions[pid]=dict(side=side,offset=x if side in ('TOP','BOT') else y)
+                names[pid]=dict(base=base_names[pid],resolved=name)
+        project['symbol_layout']=dict(frame=[sections[0][1]['W'],sections[0][1]['H']],pins=positions,names=names)
+    manual=project['symbol_layout']
+    def grid(value):
+        if isinstance(value,bool):raise ValueError('请输入有效的 MIL 数值')
+        value=float(value)
+        if not math.isfinite(value):raise ValueError('请输入有效的 MIL 数值')
+        return math.floor(value/10+.5)*10
+    if 'frame' in data:
+        manual['frame']=[grid(v) for v in data['frame']]
+        if len(manual['frame'])!=2:raise ValueError('外框需要宽和高')
+    moves=data.get('moves', [data] if 'id' in data else [])
+    if not isinstance(moves,list) or len({m['id'] for m in moves})!=len(moves):
+        raise ValueError('批量移动的引脚不能重复')
+    for move in moves:
+        pin=next(p for p in project['pins'] if p['id']==move['id'])
+        if move['side'] not in SIDES:raise ValueError('引脚方向无效')
+        manual['pins'][pin['id']]=dict(side=move['side'],offset=grid(move['offset']))
+        pin['side']=move['side']
+    # Validate every section before accepting the transaction, including shrinking.
+    section_layouts(project,env)
 
 
 def export_svg(cfg, pins, path):

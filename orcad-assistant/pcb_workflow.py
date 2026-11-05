@@ -52,6 +52,13 @@ def enrich_project(project):
     if not spec:return
     identity=' '.join(str(v) for v in (project.get('device',''),spec.get('name',''),spec.get('descr','')))
     e=spec.get('edge',{});centers=spec.get('centers',{})
+    def same_point(a,b):
+        return (isinstance(a,(list,tuple)) and len(a)==2
+            and all(isinstance(v,(int,float)) for v in a)
+            and all(abs(x-y)<1e-7 for x,y in zip(a,b)))
+    known_geometry=(re.search(r'GC4693',identity,re.I) and spec.get('body')==[5.805,3.635]
+        and spec.get('pitch')==[.64,.58] and spec.get('rows')=='ABCDE' and spec.get('cols')==7)
+    changed=False
     if (re.search(r'GC4693',identity,re.I) and spec.get('body')==[5.805,3.635]
         and spec.get('pitch')==[.64,.58] and spec.get('rows')=='ABCDE' and spec.get('cols')==7
         and abs(e.get('left_to_col1',0)-.92243)<1e-7
@@ -60,11 +67,23 @@ def enrich_project(project):
         e['left_to_col1'],e['right_to_colN']=e['right_to_colN'],e['left_to_col1']
         old=centers['BGA'][:]
         centers['BGA']=[.06007,old[1]]
-        if centers.get('OPT')==old:centers['OPT']=[.06007,old[1]]
+        if same_point(centers.get('OPT'),old):centers['OPT']=centers['BGA'][:]
+        changed=True
+    # Repair projects whose BGA migration succeeded but OPT was left behind by
+    # the old exact-float comparison. Limit this to the known legacy geometry.
+    if (known_geometry and abs(e.get('left_to_col1',0)-1.04257)<1e-7
+        and abs(e.get('right_to_colN',0)-.92243)<1e-7
+        and same_point(centers.get('BGA'),[.06007,-.04465])
+        and same_point(centers.get('OPT'),[-.06007,-.04465])):
+        centers['OPT']=centers['BGA'][:]
+        changed=True
+    if changed:
         spec['orientation_source']='GC4693 p14 TOP VIEW; S3 left, S1 right; X=+0.06007 mm'
         pcb['confirmed']=False
         pcb['notes']=[n for n in pcb.get('notes',[]) if 'X=-0.06007' not in n]
         pcb['notes'].append('已修正顶视图方向：左=S3、右=S1，阵列中心 X=+0.06007 mm；请重新确认并生成，更新 PCB 旧实例。')
+        if same_point(centers.get('OPT'),centers['BGA']):
+            pcb['notes'].append('光学中心与 BGA 阵列中心重合，两个标注指向同一个点。')
         project['generated']=None
 
 

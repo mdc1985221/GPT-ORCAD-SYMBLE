@@ -61,6 +61,30 @@ class PCBWorkflowTests(unittest.TestCase):
         project=dict(device='GC4693',pcb=data)
         pcb.enrich_project(project)
         self.assertEqual(s['centers']['OPT'],[.1,.2])
+
+    def test_orientation_migration_accepts_float_tail_in_optical_center(self):
+        data=self.extract();s=data['spec']
+        s['edge']['left_to_col1'],s['edge']['right_to_colN']=.92243,1.04257
+        s['centers']={'BGA':[-.06007,-.04465],'OPT':[-.06007000000000001,-.04465000000000002]}
+        pcb.enrich_project(dict(device='GC4693',pcb=data))
+        self.assertEqual(s['centers']['OPT'],s['centers']['BGA'])
+
+    def test_partially_migrated_optical_center_is_repaired_once(self):
+        data=self.extract();s=data['spec']
+        s['centers']={'BGA':[.06007,-.04465],'OPT':[-.06007000000000001,-.04465000000000002]}
+        data['confirmed']=True
+        project=dict(device='GC4693',pcb=data,generated={'archive':'stale.zip'})
+        pcb.enrich_project(project)
+        self.assertEqual(s['centers']['OPT'],s['centers']['BGA'])
+        self.assertFalse(data['confirmed']);self.assertIsNone(project['generated'])
+        before=copy.deepcopy(project);pcb.enrich_project(project);self.assertEqual(before,project)
+
+    def test_correct_orientation_preserves_custom_optical_center(self):
+        for optical in ([.1,.2],[-.06007,.1]):
+            data=self.extract();data['spec']['centers']['OPT']=optical[:]
+            project=dict(device='GC4693',pcb=data)
+            pcb.enrich_project(project)
+            self.assertEqual(data['spec']['centers']['OPT'],optical)
     def test_conflicting_package_heights_are_not_guessed(self):
         data=self.extract(self.text+'\nPackage Height\nC\n0.700\n0.600\n0.800')
         self.assertNotIn('height_max',data['spec'])

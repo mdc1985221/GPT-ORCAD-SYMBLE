@@ -144,3 +144,7 @@ python -m unittest discover -s tests
 ## 3D 建模与验收
 
 [3D 模型生成与验收要点](3D模型生成与验收要点.md)：说明规格书细节、尺寸依据、PCB/STEP 坐标一致性、玻璃透明兼容、检查版 STEP、预览渲染及目标 CAD 验收要求。
+
+## 完整建库演示
+
+[GC5613-C43YA：规格书、原理符号、PCB 与详细 3D](examples/GC5613-C43YA/README.md)。包含已生成的 Cadence 设计文件、交互预览与验证记录；工艺预设和目标工程验收范围见案例说明。

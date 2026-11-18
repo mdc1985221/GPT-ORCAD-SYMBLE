@@ -1,0 +1,19 @@
+{
+  "GC5613-C43YA-review-design.zip": "37b4a51b9b4e9b61828d211de2e1bfd1b3069f4cd94b4775306868f7269d2a95",
+  "preview.html": "3f4a1f981a446d1f3bd27e13c141d0558c55a6af7527c9b124abcba38b9faeca",
+  "README.md": "0e872a80897a97e82fb14348e53869bd83f5ff6087dbe73335ac03c73a398e6a",
+  "symbol-preview.svg": "64a6ba8509e966402345e94a45a3f965b20e9c32d9f94c2b202edfb529cd21d1",
+  "验证记录.md": "9f8b5307e2a7c345ec10580c46d76b170043d7a45374344ac6310b225d79aa16",
+  "3d/back-render.png": "59a163fa6523491215133b712e4b1f5d0b9e2bee8ccb9db42e35d6db9996136b",
+  "3d/front-render.png": "0eca7ae859531021c0bc687f2b0db5fe342bc1dff9796b4fe20795fd9392ea0c",
+  "3d/GC5613_C43YA.step": "156c675c564c422955660759238bdaa9c3b0ca4de4f4985a26e19b46bc4c0505",
+  "3d/GC5613_C43YA_INSPECTION_NO_GLASS.step": "08d54edf3a01f5a9d4dc50c33644d105bee423b82147eb75875af740d14b4b8a",
+  "3d/perspective-render.png": "f935f3e45c71a699896aaf9859653ea3e638f3f58bc91d474d98bbe8e3cb9554",
+  "datasheet/GC5613-C43YA-CSP-Datasheet-V1.1.pdf": "364fb211571c4234dc167143425fe034d92bf54a28ee0dc2722f4d4dd0b889a6",
+  "pcb/GC5613_C43YA_preview.html": "f7c5896c58179fbf45234224f0c48b0e95e286f06acab27de566dffe981b8a25",
+  "design-files/symbol/IC/GC5613_C43YA/GC5613_C43YA.OLB": "ec38e036970c29b16b29bc8ab5d281767242ba0cb0f228b0930d65d6561bd76a",
+  "design-files/pcb/IC/GC5613_C43YA/GC5613_C43YA.dra": "2d8e32b64efc262efaf98bf7609a737d18a5b984c8262d6bfb4615ab029c4e5f",
+  "design-files/pcb/IC/GC5613_C43YA/gc5613_c43ya.psm": "14fda4c397a41babdf53ad2177a1569cb1dd5b2e6a70d729a8a155643fecaabb",
+  "design-files/pcb/IC/GC5613_C43YA/sm2_92f5b9e9911d.pad": "60b61c64035f572e90ad7bed2f89289cdc1b3763e0453a685709a0eff97ff112",
+  "design-files/3d/IC/GC5613_C43YA/GC5613_C43YA.step": "156c675c564c422955660759238bdaa9c3b0ca4de4f4985a26e19b46bc4c0505"
+}

@@ -188,6 +188,34 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(next(p for p in pins if p['id']=='F1')['page'], 2)
             self.assertTrue(next(p for p in pins if p['id']=='1')['conflicts'])
 
+    def test_open_signal_table_out_of_order_and_watermark(self):
+        import fitz
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'open-table.pdf'
+            doc = fitz.open()
+            for rows in [[('A1','NC','-'),('A2','DOGND','ground'),('A3','MDN3','output')],
+                         [('G1','ATEST','analog I/O'),('G15','SDA','I/O'),('K15','NC','-')]]:
+                page = doc.new_page()
+                # Content stream order deliberately differs from visual order.
+                for i, row in enumerate(rows):
+                    for x, value in zip((60,120,220),row):
+                        page.insert_text((x,140+i*24),value,fontsize=9)
+                page.insert_text((60,90),'table 1-1 signal descriptions')
+                for x, text in [(60,'pin number'),(120,'signal name'),(220,'pin type'),(310,'description')]:
+                    page.insert_text((x,110),text,fontsize=9)
+                page.insert_text((170,150),'Confidential',fontsize=40,
+                                 morph=(fitz.Point(170,150),fitz.Matrix(-45)))
+                page.insert_text((60,240),'table 1-2 pin states')
+                for x, text in [(60,'A3'),(120,'WRONG'),(220,'input')]:
+                    page.insert_text((x,265),text,fontsize=9)
+            doc.save(path)
+            doc.close()
+            pins = core.extract_pdf(path)
+            self.assertEqual([(p['id'],p['name'],p['type']) for p in pins],
+                [('A1','NC','NC'),('A2','DOGND','GND'),('A3','MDN3','OUT'),
+                 ('G1','ATEST','ANA'),('G15','SDA','IO'),('K15','NC','NC')])
+            self.assertFalse(any(p['conflicts'] for p in pins))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -186,6 +186,7 @@ def build(project, env, output_root, progress=lambda msg: None):
         report = dict(status='PASS', pins=len(actual), checks=['编号与名称配对', '电气类型', '全部端点坐标', '单一 device', 'PCB Footprint', '外框二进制回读'],
                       frame=frame, source_review='user_confirmed' if project.get('sources') else 'manual_input',
                       limitation='布局预览不是 Capture 截图；字体显示和实际网表/PCB 导入需在目标工程检查。')
+        report['file_hashes']=core.artifact_hashes(staging,[olb,staging/'project.json'])
         core.atomic_json(staging / 'verification.json', report)
         destination = root / (cfg['device'] + '-' + token)
         staging.rename(destination)
@@ -276,6 +277,7 @@ def build_multipart(project, env, output_root, progress):
         report = dict(status='PASS', pins=len(project['pins']), parts=len(sections), sections=checked,
                       package=device, heterogeneous=True, frame=frame,
                       checks=['同一 package', '异构多单元', '完整且互不重复脚号', '逐 PART 名称/类型/坐标回读', 'PCB Footprint', '全部外框'])
+        report['file_hashes']=core.artifact_hashes(staging,[olb,staging/'project.json'])
         core.atomic_json(staging / 'verification.json', report)
         destination = root / (device + '-' + token)
         staging.rename(destination)

@@ -1,0 +1,2 @@
+# Optional STEP generation runtime. Keep separate from the Web/Cadence runtime.
+cadquery>=2.6,<3

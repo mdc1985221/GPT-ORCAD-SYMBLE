@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -100 460 460">
+<rect x="-100" y="-100" width="100%" height="100%" fill="#f8fafc"/>
+<rect width="260" height="260" fill="white" stroke="#344862"/>
+<line x1="110" y1="0" x2="110" y2="-30" stroke="#2563eb"/>
+<text x="110" y="8" font-family="sans-serif" font-size="6" text-anchor="end" transform="rotate(-90,110,8)">BOOT</text>
+<text x="107" y="-15.0" text-anchor="middle" transform="rotate(-90,107,-15.0)" font-family="sans-serif" font-size="5" fill="#64748b">14</text>
+<line x1="130" y1="0" x2="130" y2="-30" stroke="#2563eb"/>
+<text x="130" y="8" font-family="sans-serif" font-size="6" text-anchor="end" transform="rotate(-90,130,8)">VIN_1</text>
+<text x="127" y="-15.0" text-anchor="middle" transform="rotate(-90,127,-15.0)" font-family="sans-serif" font-size="5" fill="#64748b">8</text>
+<line x1="140" y1="0" x2="140" y2="-30" stroke="#2563eb"/>
+<text x="140" y="8" font-family="sans-serif" font-size="6" text-anchor="end" transform="rotate(-90,140,8)">VIN_2</text>
+<text x="137" y="-15.0" text-anchor="middle" transform="rotate(-90,137,-15.0)" font-family="sans-serif" font-size="5" fill="#64748b">12</text>
+<line x1="110" y1="260" x2="110" y2="290" stroke="#2563eb"/>
+<text x="110" y="252" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(-90,110,252)">AGND</text>
+<text x="107" y="275.0" text-anchor="middle" transform="rotate(-90,107,275.0)" font-family="sans-serif" font-size="5" fill="#64748b">5</text>
+<line x1="130" y1="260" x2="130" y2="290" stroke="#2563eb"/>
+<text x="130" y="252" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(-90,130,252)">PGND_1</text>
+<text x="127" y="275.0" text-anchor="middle" transform="rotate(-90,127,275.0)" font-family="sans-serif" font-size="5" fill="#64748b">9</text>
+<line x1="140" y1="260" x2="140" y2="290" stroke="#2563eb"/>
+<text x="140" y="252" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(-90,140,252)">PGND_2</text>
+<text x="137" y="275.0" text-anchor="middle" transform="rotate(-90,137,275.0)" font-family="sans-serif" font-size="5" fill="#64748b">11</text>
+<line x1="0" y1="90" x2="-30" y2="90" stroke="#2563eb"/>
+<text x="5" y="90" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(0,5,90)">BP5</text>
+<text x="-15.0" y="87" text-anchor="middle" transform="rotate(0,-15.0,87)" font-family="sans-serif" font-size="5" fill="#64748b">6</text>
+<line x1="0" y1="100" x2="-30" y2="100" stroke="#2563eb"/>
+<text x="5" y="100" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(0,5,100)">EN</text>
+<text x="-15.0" y="97" text-anchor="middle" transform="rotate(0,-15.0,97)" font-family="sans-serif" font-size="5" fill="#64748b">7</text>
+<line x1="0" y1="110" x2="-30" y2="110" stroke="#2563eb"/>
+<text x="5" y="110" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(0,5,110)">FB</text>
+<text x="-15.0" y="107" text-anchor="middle" transform="rotate(0,-15.0,107)" font-family="sans-serif" font-size="5" fill="#64748b">4</text>
+<line x1="0" y1="120" x2="-30" y2="120" stroke="#2563eb"/>
+<text x="5" y="120" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(0,5,120)">MODE</text>
+<text x="-15.0" y="117" text-anchor="middle" transform="rotate(0,-15.0,117)" font-family="sans-serif" font-size="5" fill="#64748b">2</text>
+<line x1="0" y1="130" x2="-30" y2="130" stroke="#2563eb"/>
+<text x="5" y="130" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(0,5,130)">PGOOD</text>
+<text x="-15.0" y="127" text-anchor="middle" transform="rotate(0,-15.0,127)" font-family="sans-serif" font-size="5" fill="#64748b">3</text>
+<line x1="0" y1="140" x2="-30" y2="140" stroke="#2563eb"/>
+<text x="5" y="140" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(0,5,140)">SW_1</text>
+<text x="-15.0" y="137" text-anchor="middle" transform="rotate(0,-15.0,137)" font-family="sans-serif" font-size="5" fill="#64748b">10</text>
+<line x1="0" y1="150" x2="-30" y2="150" stroke="#2563eb"/>
+<text x="5" y="150" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(0,5,150)">SW_2</text>
+<text x="-15.0" y="147" text-anchor="middle" transform="rotate(0,-15.0,147)" font-family="sans-serif" font-size="5" fill="#64748b">13</text>
+<line x1="0" y1="160" x2="-30" y2="160" stroke="#2563eb"/>
+<text x="5" y="160" font-family="sans-serif" font-size="6" text-anchor="start" transform="rotate(0,5,160)">SYNC/FSEL</text>
+<text x="-15.0" y="157" text-anchor="middle" transform="rotate(0,-15.0,157)" font-family="sans-serif" font-size="5" fill="#64748b">1</text>
+<text x="130.0" y="130.0" text-anchor="middle" font-family="sans-serif" font-size="12">TPS543620</text></svg>

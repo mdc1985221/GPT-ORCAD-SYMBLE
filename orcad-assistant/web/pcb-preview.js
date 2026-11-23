@@ -4,6 +4,7 @@ let pcbPan = {x:0,y:0};
 
 function drawPCB() {
   const target=$('pcb-preview'), s=state?.project.pcb?.spec, pads=state?.pcb_preview, style=state?.pcb_presentation;
+  if(s?.kind==='polygon_smd'){drawPolygonPCB();return;}
   if(!target)return;
   if($('pcb').style.display==='block')$('zoom').textContent=Math.round(pcbZoom*100)+'%';
   if(!s||!pads?.length||!style){target.innerHTML='<div class="pcb-placeholder">补齐尺寸后，自动显示 PCB 焊盘布局</div>';return;}
@@ -41,4 +42,19 @@ function renderProgress(){
   if(job.busy)container.removeAttribute('aria-valuenow');else container.setAttribute('aria-valuenow',job.error?'0':String(job.progress||0));
   $('task-progress-label').textContent=job.error?'操作未完成，请查看错误信息':job.message;
   $('task-progress-value').textContent=job.busy?'进行中':job.error?'未完成':job.progress===100?'100%':state.project.pins.length?'待生成':'就绪';
+}
+
+function renderPolygonPCB(){
+ const pcb=state.project.pcb,s=pcb.spec;
+ $('pcb').innerHTML=`<p class="pcb-note">异形 QFN · ${esc(s.name)} · 顶视 / mm · 铜、阻焊和锡膏独立轮廓</p><div class="pcb-grid"><div><div class="pcb-metrics"><div><small>本体尺寸</small>${s.body.join(' × ')} mm</div><div><small>引脚 / 最大高度</small>${s.pads.length} / ${s.height_max} mm</div></div><p>10 号脚采用 SMD，其余采用 NSMD。蓝=铜，绿=阻焊，橙=锡膏；切换图层核对不同轮廓。</p><p>此型号使用已核对的官方尺寸模板；异形轮廓不能用圆形焊盘参数调整。</p><label class="pcb-check"><input id="polygon-confirm" type="checkbox" ${pcb.confirmed?'checked':''}> 我已核对方向、独立焊盘轮廓及参考工艺。</label><div class="actions"><button class="primary" id="polygon-save">确认并保存</button></div><details><summary>规格书来源与采用边界</summary><div class="source">${(pcb.sources||[]).map(x=>`p${x.page} · ${esc(x.field)}: ${esc(x.text)}`).join('<br>')}</div></details></div><div><div class="pcb-layers">${Object.entries({copper:'铜',mask:'阻焊开口',paste:'锡膏'}).map(([k,v])=>`<label><input type="checkbox" checked onchange="polygonLayers.${k}=this.checked;drawPolygonPCB()">${v}</label>`).join('')}</div><div id="pcb-preview" class="pcb-preview"></div><p class="pcb-note">滚轮缩放 / 右键平移 · 异形焊盘依赖 SSM 轮廓文件，下载时须同时保留 PAD / PSM / SSM。</p>${(pcb.notes||[]).map(n=>`<p class="pcb-note">${esc(n)}</p>`).join('')}</div></div>`;
+ $('polygon-save').onclick=async()=>{if(!$('polygon-confirm').checked){toast('请先核对并勾选确认');return}await act({action:'pcb',spec:s,confirmed:true})};
+ drawPolygonPCB();bindPCBPreview();
+}
+const polygonLayers={copper:true,mask:true,paste:true};
+function drawPolygonPCB(){
+ const target=$('pcb-preview'),style=state?.pcb_presentation;if(!target||style?.kind!=='polygon_smd')return;
+ target.innerHTML=style.svg;let svg=target.querySelector('svg');svg.id='pcb-svg';
+ svg.setAttribute('viewBox',`${pcbPan.x-2.35/pcbZoom} ${pcbPan.y-2/pcbZoom} ${4.7/pcbZoom} ${4/pcbZoom}`);
+ for(const [layer,visible] of Object.entries(polygonLayers))svg.querySelectorAll(`[data-layer="${layer}"]`).forEach(n=>n.style.display=visible?'':'none');
+ $('zoom').textContent=Math.round(pcbZoom*100)+'%';
 }

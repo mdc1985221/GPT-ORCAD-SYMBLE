@@ -48,7 +48,7 @@ def pin_type(raw):
 
 
 def new_project():
-    return dict(version=1, device='', footprint='', profile='sensor', pitch=10,
+    return dict(version=1, device='', footprint='', profile='auto', pitch=10,
                 expected_count=None, sources=[], pins=[], reviewed=[], generated=None,
                 parts={'A': '主单元'}, references=[])
 
@@ -61,11 +61,21 @@ def atomic_json(path, data):
     temp.replace(path)
 
 
+def artifact_hashes(root, files):
+    root=Path(root).resolve()
+    result={}
+    for path in files:
+        path=Path(path).resolve()
+        if not path.is_relative_to(root):raise ValueError('库文件不在构建目录内')
+        result[path.relative_to(root).as_posix()]=hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+
 def load_project(path):
     project = json.loads(Path(path).read_text(encoding='utf-8-sig'))
     if project.get('version') != 1 or not isinstance(project.get('pins'), list):
         raise ValueError('不是受支持的符号项目文件')
-    if project.get('profile') not in ('sensor', 'simple'):
+    if project.get('profile') not in ('auto', 'sensor', 'power', 'generic', 'simple'):
         raise ValueError('未知布局模板')
     if not isinstance(project.get('pitch'), int) or project['pitch'] < 10 or project['pitch'] % 10:
         raise ValueError('项目间距必须是正的 10 MIL 整数倍')
@@ -88,6 +98,10 @@ def invalidate_legacy_pcb(project):
     """Numerical-only legacy verification did not establish physical units."""
     generated = project.get('generated') or {}
     report = generated.get('report', {})
+    polygon=report.get('pcb',{})
+    if polygon.get('kind')=='polygon_smd' and polygon.get('revision')==1:
+        if polygon.get('units')=='millimeters' and set(polygon.get('imports',[]))=={'millimeters','mils'}:
+            return  # Polygon reports use independent vertex/import validation.
     if 'pcb' in report and report['pcb'].get('units') != 'millimeters':
         generated['report']['status'] = 'INVALID_UNITS'
         generated['report']['pcb']['status'] = 'INVALID_UNITS'
@@ -144,8 +158,77 @@ def import_csv(path):
     return pins
 
 
-def extract_pdf(path, progress=lambda msg: None):
+def positioned_signal_pins(page, number, path):
+    """Read open-sided signal tables by geometry, independent of PDF text order."""
+    horizontal = [s['bbox'] for b in page.get_text('dict')['blocks']
+                  for line in b.get('lines', [])
+                  if abs(line['dir'][0]-1)<.001 and abs(line['dir'][1])<.001
+                  for s in line['spans']]
+    words = [w for w in page.get_text('words') if any(
+        r[0]-.1<=w[0] and r[1]-.1<=w[1] and w[2]<=r[2]+.1 and w[3]<=r[3]+.1
+        for r in horizontal)]
+    result = []
+    for typ in page.search_for('pin type'):
+        names = [r for r in page.search_for('signal name')
+                 if abs(r.y0-typ.y0)<3 and r.x0<typ.x0]
+        descriptions = [r for r in page.search_for('description')
+                        if abs(r.y0-typ.y0)<3 and r.x0>typ.x0]
+        identifiers = [r for r in page.search_for('pin number')
+                       if abs(r.y0-typ.y0)<20 and names and r.x0<names[0].x0]
+        if not names or not descriptions or not identifiers:
+            continue
+        name, desc = names[0], descriptions[0]
+        left = min(r.x0 for r in identifiers)
+        top = max(typ.y1, name.y1, desc.y1)
+        # A subsequent table (e.g. pin states) must never supply signal rows.
+        bottom = min([w[1] for w in words if w[4].lower()=='table' and w[1]>top]+[page.rect.height-35])
+        ids = sorted([w for w in words if left-2<=w[0]<name.x0-4
+                      and top<w[1]<bottom and PIN_RE.fullmatch(w[4])], key=lambda w:w[1])
+        for i, ident in enumerate(ids):
+            end = ids[i+1][1]-1 if i+1<len(ids) else bottom
+            row = sorted([w for w in words if left-2<=w[0] and ident[1]-2<=w[1]<end],
+                         key=lambda w:(round(w[1]/3),w[0]))
+            pname = ''.join(w[4] for w in row if name.x0-2<=w[0]<typ.x0-4 and abs(w[1]-ident[1])<3)
+            raw_type = ' '.join(w[4] for w in row if typ.x0-2<=w[0]<desc.x0-4 and abs(w[1]-ident[1])<3)
+            resolved = 'NC' if pname.upper()=='NC' else pin_type(raw_type)
+            if not re.fullmatch(r'[A-Za-z][\w/+.\-]*',pname) or not resolved:
+                continue
+            result.append(dict(id=ident[4],name=pname,type=resolved,part='A',side='',group='',
+                page=number,bbox=[left,ident[1],page.rect.width,end],source=str(Path(path).resolve()),
+                raw=' '.join(w[4] for w in row),confidence=.9,conflicts=[]))
+    return result
+
+
+def chinese_signal_pins(page, number, path):
+    """Use the number column, not the adjacent table row index."""
+    result=[];words=page.get_text('words')
+    for header in page.search_for('信号名'):
+        ids=[r for r in page.search_for('编号') if abs(r.y0-header.y0)<3]
+        types=[r for r in page.search_for('引脚类型') if abs(r.y0-header.y0)<3]
+        if not ids or not types:continue
+        start=ids[0].x0;name_x=header.x0;type_x=types[0].x0
+        bottom=min([r.y0 for r in page.search_for('Top View') if r.y0>header.y1]+[page.rect.height-55])
+        candidates=sorted([w for w in words if start-3<=w[0]<name_x-4 and w[1]>header.y1
+                           and w[1]<bottom and PIN_RE.fullmatch(w[4])],key=lambda w:w[1])
+        for idx,w in enumerate(candidates):
+            end=candidates[idx+1][1]-1 if idx+1<len(candidates) else min(w[3]+30,page.rect.height-55)
+            row=[v for v in words if w[1]-2<=v[1]<end]
+            names=sorted([v for v in row if (ids[0].x1+name_x)/2<=v[0]<type_x-5 and abs(v[1]-w[1])<4],key=lambda v:v[0])
+            types_raw=[v[4] for v in row if type_x-2<=v[0]<types[0].x1+10 and abs(v[1]-w[1])<4]
+            name=''.join(v[4] for v in names)
+            if not re.fullmatch(r'[A-Za-z][\w/+.\-]*',name):continue
+            raw=' '.join(v[4] for v in row);typ=pin_type(' '.join(types_raw))
+            if name.upper()=='NC' or (name.upper()=='RESERVED' and re.search(r'\bNC\b',raw)):typ='NC'
+            result.append(dict(id=w[4],name=name,type=typ,part='A',side='',group='',page=number,
+                source=str(Path(path).resolve()),raw=raw,confidence=.9,conflicts=[]))
+    return result
+
+
+def extract_pdf(path, progress=lambda msg: None, package=None):
     """Text tables first. Preserve page, bbox and conflicting observations."""
+    from polygon_smd import profile as polygon_profile
+    reviewed=polygon_profile(path) if Path(path).is_file() else None
+    if reviewed:return reviewed['pins']
     import pdfplumber
     observations = []
     text_pages = 0
@@ -217,13 +300,34 @@ def extract_pdf(path, progress=lambda msg: None):
     import fitz
     from contextlib import nullcontext
     with (fitz.open(path) if Path(path).is_file() else nullcontext([])) as native:
+        package_pages={};current=None
+        for number,page in enumerate(native,1):
+            text=page.get_text()
+            section=re.search(r'1\.3\.[12]\.\s*(CSP|PLCC)',text,re.I)
+            if section:current=section[1].upper()
+            if current:package_pages[number]=current
+        available=set(package_pages.values())
+        if len(available)>1 and package is None:
+            raise ValueError('规格书包含多个引脚封装版本：'+', '.join(sorted(available))+'。请选择封装版本后导入，不能混合提取。')
+        if package and available and package.upper() not in available:raise ValueError('规格书中没有所选封装版本')
         for number, page in enumerate(native, 1):
+            chinese=chinese_signal_pins(page,number,path)
+            if chinese:
+                observations=[p for p in observations if p['page']!=number]
+                observations.extend(chinese)
+            positioned = positioned_signal_pins(page, number, path)
+            if positioned:
+                replaced = {p['id'] for p in positioned}
+                observations = [p for p in observations if p['page']!=number or p['id'] not in replaced]
+                observations.extend(positioned)
             text = page.get_text()
             header = re.search(r'Pin\s+Name\s+Type\s+A/D\s+Description', text)
             if not header:
                 continue
             body = text[header.end():]
-            pattern = r'(?m)^([A-Z]{1,3}[1-9]\d*)\s*\n([A-Za-z][\w/+.\-]*)\s*\n(Ground|Power(?:/NC)?|Input/Output|Input(?:/NC)?|Output|NC)\s*\n([AD/])\s*\n'
+            # NC rows may leave A/D empty; bidirectional types also use a
+            # backslash in manufacturer PDFs. Do not require the A/D cell.
+            pattern = r'(?m)^([A-Z]{1,3}[1-9]\d*)[ \t]*\n\s*([A-Za-z][\w/+.\-]*)[ \t]*\n\s*(Ground|Power(?:/NC)?|Input\s*[/\\]\s*Output|Input(?:/NC)?|Output|NC)[ \t]*\n'
             matches = list(re.finditer(pattern, body))
             if not matches:
                 continue
@@ -238,6 +342,8 @@ def extract_pdf(path, progress=lambda msg: None):
                 observations.append(dict(id=match[1], name=match[2], type=typ, part='A',
                     side='', group='', page=number, source=str(Path(path).resolve()),
                     raw=raw, confidence=.9, conflicts=[]))
+        if package and package_pages:
+            observations=[p for p in observations if package_pages.get(p['page'])==package.upper()]
     found = OrderedDict()
     for pin in observations:
         old = found.get(pin['id'])
@@ -278,10 +384,37 @@ def signal_order(pin):
     return (3, ((1, priorities.get(name, 10)),) + natural(name), 0, natural(pin['id']))
 
 
+LAYOUT_PROFILES={'auto':'自动推荐','sensor':'图像传感器','power':'电源管理','generic':'通用 IC','simple':'按脚号排列'}
+
+
+def recommended_profile(project):
+    names={p['name'].upper() for p in project['pins']}
+    identity=' '.join(str(project.get(k,'')) for k in ('device','footprint'))
+    if re.search(r'TPS54\d+',identity,re.I) or ({'VIN','SW','FB'}<=names):return 'power'
+    if any(high_speed(n) for n in names) or re.search(r'\b(?:GC\d{4}|SC\d{4}|OS04A10|IMX\d+)\b',identity,re.I):return 'sensor'
+    return 'generic'
+
+
+def effective_profile(project):
+    chosen=project.get('profile','sensor')
+    if chosen not in LAYOUT_PROFILES:raise ValueError('未知符号布局模板')
+    return recommended_profile(project) if chosen=='auto' else chosen
+
+
+def layout_rule(project):
+    chosen=effective_profile(project)
+    rules={'sensor':'上电源 · 下 GND｜左控制 · 右 MIPI',
+           'power':'上供电 · 下地｜左控制 · 右输出/反馈',
+           'generic':'上电源 · 下地｜左输入/双向 · 右输出',
+           'simple':'按脚号两侧排列｜EP 单独置底'}
+    return dict(profile=chosen,label=LAYOUT_PROFILES[chosen],recommended=LAYOUT_PROFILES[recommended_profile(project)],rule=rules[chosen])
+
+
 def auto_layout(project):
     project.pop('symbol_layout',None)
     pins = project['pins']
-    if project['profile'] == 'simple':
+    profile=effective_profile(project)
+    if profile == 'simple':
         exposed = [p for p in pins if re.fullmatch(r'(?:EP|PAD)\d*', p['id'])]
         ordered = sorted([p for p in pins if p not in exposed], key=lambda p: natural(p['id']))
         half = math.ceil(len(ordered) / 2)
@@ -294,6 +427,22 @@ def auto_layout(project):
         for p in exposed:
             p.update(side='BOT', group='裸露焊盘')
         project['pins'] = left + right + exposed
+        return
+    if profile in ('power','generic'):
+        for p in pins:
+            typ=p['type'];name=p['name'].upper()
+            if typ in ('GND','NC'):
+                side='BOT';group=name if typ=='GND' else 'NC'
+            elif typ=='PWR' or (profile=='power' and name in ('BP5','VCC','VREG','VDD','INTVCC')):
+                side='TOP';group=name
+            elif profile=='power' and re.fullmatch(r'(?:SW|LX|PH)(?:[0-9]+)?',name):side='RIGHT';group='开关输出'
+            elif profile=='power' and name in ('FB','VSENSE','VFB'):side='RIGHT';group='反馈'
+            elif typ=='OUT':side='RIGHT' if profile=='generic' else 'LEFT';group='输出' if profile=='generic' else '控制与状态'
+            else:side='LEFT';group='输入与双向' if profile=='generic' else '控制与状态'
+            p.update(side=side,group=group)
+        pins.sort(key=lambda p:(SIDES.index(p['side']),
+            ({'VIN':0,'BP5':1,'BOOT':2}.get(p['group'],1) if profile=='power' and p['side']=='TOP' else 0 if p['group']=='开关输出' else 1 if p['group']=='反馈' else 0),
+            natural(p['group']),natural(p['id'])))
         return
     for p in pins:
         typ = p['type']

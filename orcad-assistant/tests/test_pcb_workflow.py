@@ -85,6 +85,33 @@ class PCBWorkflowTests(unittest.TestCase):
             project=dict(device='GC4693',pcb=data)
             pcb.enrich_project(project)
             self.assertEqual(data['spec']['centers']['OPT'],optical)
+
+    def test_os04a10_extracts_nonuniform_rows_and_optical_center(self):
+        mechanical='''OS04A10\ntable 9-1 package dimensions (sheet 1 of 2)\npackage body dimension x\nA\n10630\n10680\n10730\nµm\npackage body dimension y\nB\n8490\n8540\n8590\nµm\npackage heighta\nC\n649\n695\n741\nµm\nball height\nC1\n218\n240\n262\nµm\npackage body thickness\nC2\n431\n455\n479\nµm\nball diameter\nD\n306\n314\n322\nµm\nball pitch x axis\nJ1\n720\nµm\nball pitch y1 axis\nJ2\n600\nµm\nball pitch y2 axis\nJ3\n955\nµm\ntotal ball countb\nN\n72 (4 NC)\nedge to ball center distance along x\nS1\n225\n300\n375\nµm\nedge to ball center distance along y\nS2\n253\n328\n403\nµm\nball placement: solder ball diameter 300µm\nPCB design recommendations\nrecommended PCB NSMD ball pad size'''
+        mechanical += '\ndie body dimension x\na\n8842\nµm\ndie body dimension y\nb\n5455\nµm\nglass material thickness is 400µm'
+        optical='''OS04A10\n10.1 sensor array center\nfigure 10-1 sensor array center\n7841.6 µm\n4454.4 µm\ntop view\narray center and\npackage center and\nchip center\n(0 µm, 0 µm)'''
+        ids={r+str(c) for r in 'ABJK' for c in range(1,16)}|{r+str(c) for r in 'CDEFGH' for c in (1,15)}
+        pins=[dict(id=pid) for pid in sorted(ids)]
+        with patch('fitz.open',return_value=Doc([Page(mechanical),Page(optical)])):
+            data=pcb.inspect_pdf('os04a10.pdf',pins)
+        spec=data['spec'];pads={p[0]:p[1:] for p in pcb.fp.geometry(spec)}
+        self.assertEqual(data['needs'],[])
+        self.assertEqual(spec['body'],[10.68,8.54]);self.assertEqual(spec['height_max'],.741)
+        self.assertEqual(spec['glass_thickness'],.4)
+        self.assertEqual(spec['die_size'],[8.842,5.455])
+        self.assertIsNone(spec['mechanical_dimensions']['a']['min'])
+        self.assertEqual(spec['mechanical_dimensions']['D']['min'],.306)
+        self.assertEqual(spec['ball_height'],.240);self.assertEqual(spec['body_thickness'][1],.455)
+        self.assertEqual(spec['centers'],{'BGA':[0,0],'OPT':[0,0]})
+        self.assertEqual(spec['row_pitch_y'],[.6]+[.955]*7+[.6])
+        self.assertEqual(spec['pad_dia'],.225);self.assertEqual(len(pads),72)
+        self.assertAlmostEqual(pads['A1'][0],-5.04);self.assertAlmostEqual(pads['A1'][1],3.9425)
+        self.assertAlmostEqual(pads['K15'][0],5.04);self.assertAlmostEqual(pads['K15'][1],-3.9425)
+        from templates.footprint.reference_generator import compute
+        generated=compute(spec)
+        self.assertEqual(len(generated['pads']),72)
+        self.assertAlmostEqual(generated['arr_c'][0],0);self.assertAlmostEqual(generated['arr_c'][1],0)
+        self.assertTrue(any(x['field']=='光学中心与方向' and x['page']==2 for x in data['sources']))
     def test_conflicting_package_heights_are_not_guessed(self):
         data=self.extract(self.text+'\nPackage Height\nC\n0.700\n0.600\n0.800')
         self.assertNotIn('height_max',data['spec'])

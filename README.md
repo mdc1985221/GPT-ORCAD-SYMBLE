@@ -16,7 +16,7 @@
 
 **当前为预览版，重点验证 Sensor 的 CSP/BGA 场景，GC4693 是主要回归样例。不是任意规格书都能无人确认直接生成可投产封装。** 默认先生成可用布局，再请用户处理识别疑点、尺寸方向和工艺参数。
 
-当前版本：**v0.2.0-preview.3**。新增原理符号手动布局、外框尺寸调整、框选批量移动，并修正旧项目光学中心迁移遗漏。
+历史发布标签：**v0.2.0-preview.3**；当前 main 已更新至 **2026-11-23 源码快照**，新增功能见下方更新说明。新增原理符号手动布局、外框尺寸调整、框选批量移动，并修正旧项目光学中心迁移遗漏。
 
 ## 能做什么
 
@@ -148,3 +148,20 @@ python -m unittest discover -s tests
 ## 完整建库演示
 
 [GC5613-C43YA：规格书、原理符号、PCB 与详细 3D](examples/GC5613-C43YA/README.md)。包含已生成的 Cadence 设计文件、交互预览与验证记录；工艺预设和目标工程验收范围见案例说明。
+
+<!-- qfn-layout-update-20261123 -->
+## 2026-11-23：异形 QFN、布局模板与器件库
+
+当前 main 的 Python/Web 源码已加入：
+
+- **符号布局模板**：自动推荐、图像传感器、电源管理、通用 IC、按脚号排列；TPS543620 自动推荐电源管理；名称/类型不变，连接点仍为10 MIL。
+- **异形 QFN 首例**：TI TPS543620 / RPY0014A；铜、阻焊和锡膏独立多边形，支持L形、SMD/NSMD混用；原生SSM/PAD/DRA/PSM生成与轮廓回读、mm/mil导入验证。
+- **器件库管理**：验证后收录、分类、预览、设计文件下载与Capture/psmpath/padpath/3D路径复制。异形焊盘的SSM依赖随下载保留。
+- **详细3D**：CSP/BGA感光面与玻璃细节，以及QFN独立端子模型；STEP重导入、逐实体几何核对，Web显示真实保存模型对应的网格。
+- **规格书适配和修复**：GC5613的NC/双向脚、机械/光学尺寸；SC8238/OS04A10；预览缩放、重连提示与批处理退出、UTF-8记录问题。
+
+本次96项自动回归测试和实际Web流程验证通过。测试通过不等于目标工程DRC或制造验收；新型号仍需核对资料与工艺。QFN目前仅适配已核对PDF版本，多锡膏窗口尚未开放。旧EXE/旧发布标签保留原版本，新增功能请运行main源码。
+
+[异形 QFN 与电源管理布局演示、下载及限制](examples/TPS543620-QFN/README.md)。官方规格书通过TI链接获取，本次不上传原PDF或公司库。
+
+安装：`pip install -r orcad-assistant/requirements.txt`；3D另装`orcad-assistant/requirements-model3d.txt`，详见[应用说明](orcad-assistant/README.md)。启动仍使用`启动符号助手.cmd`或`python orcad-assistant/web_app.py`；原生库生成需本机Cadence环境。

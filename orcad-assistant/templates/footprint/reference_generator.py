@@ -85,9 +85,13 @@ def compute(cfg):
     nrows, ncols = len(cfg["rows"]), cfg["cols"]
     # 自洽校验
     assert abs((e["left_to_col1"] + (ncols - 1) * PX + e["right_to_colN"]) - A) < 1e-6, "X 向尺寸不闭合"
-    assert abs((e["top_to_rowA"] + (nrows - 1) * PY + e["bottom_to_rowN"]) - B) < 1e-6, "Y 向尺寸不闭合"
+    row_pitch_y = cfg.get("row_pitch_y", [PY] * (nrows - 1))
+    assert len(row_pitch_y) == nrows - 1 and all(v > 0 for v in row_pitch_y), "Y 向逐行间距无效"
+    assert abs((e["top_to_rowA"] + sum(row_pitch_y) + e["bottom_to_rowN"]) - B) <= .001, "Y 向尺寸不闭合"
     col_x = [-(hx - e["left_to_col1"]) + i * PX for i in range(ncols)]      # 左负右正
-    row_y = [(hy - e["top_to_rowA"]) - i * PY for i in range(nrows)]        # A 在上为正
+    row_y = [hy - e["top_to_rowA"]]                                           # A 在上为正
+    for gap in row_pitch_y:
+        row_y.append(row_y[-1] - gap)
     missing = set(cfg["missing"])
     pads = [(cfg["rows"][r] + str(c + 1), round(col_x[c], 4), round(row_y[r], 4))
             for r in range(nrows) for c in range(ncols)

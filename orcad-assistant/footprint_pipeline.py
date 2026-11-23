@@ -8,10 +8,24 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 from templates.footprint.reference_generator import padstack_name
-from templates.footprint.drawing import presentation
+from templates.footprint.drawing import presentation as ball_presentation
 
 BASE=Path(__file__).parent
 TEMPLATES=BASE/'templates'/'footprint'
+
+
+def presentation(spec):
+    if spec.get('kind')=='polygon_smd':
+        import polygon_smd
+        return dict(kind='polygon_smd',svg=polygon_smd.svg(spec))
+    return ball_presentation(spec)
+
+
+def native_asset_names(spec,report=None):
+    if spec.get('kind')=='polygon_smd':
+        if not report or report.get('status')!='PASS':raise ValueError('异形封装需要成功的原生验证记录')
+        return {n.lower() for n in report['assets']}
+    return {(spec['name']+suffix).lower() for suffix in ('.dra','.psm')}|{(padstack_name(spec)+'.pad').lower()}
 
 
 def require_height(spec):
@@ -135,6 +149,9 @@ def verify_drawing(spec, directory, require_paths=True):
 
 
 def geometry(spec):
+    if spec.get('kind')=='polygon_smd':
+        import polygon_smd
+        return polygon_smd.validate(spec)
     """Explicit checks remain active even when Python runs with -O."""
     if len(spec['body'])!=2 or len(spec['pitch'])!=2 or any(len(spec['centers'][k])!=2 for k in ('BGA','OPT')):
         raise ValueError('本体、间距、中心必须为二维坐标')
@@ -150,6 +167,10 @@ def geometry(spec):
     if min(*spec['body'],*spec['pitch'],spec['pad_dia'],spec['paste_dia'],spec['ball_dia'])<=0:
         raise ValueError('本体、间距、焊盘和锡膏尺寸必须大于 0')
     rows=spec['rows']; cols=spec['cols']; e=spec['edge']; w,h=spec['body']; px,py=spec['pitch']
+    row_pitch_y=spec.get('row_pitch_y',[py]*(len(rows)-1))
+    if (not isinstance(row_pitch_y,list) or len(row_pitch_y)!=len(rows)-1
+        or any(not isinstance(v,(int,float)) or not math.isfinite(v) or v<=0 for v in row_pitch_y)):
+        raise ValueError('Y 方向逐行间距数量或数值无效')
     if not re.fullmatch('[A-Z]+',rows) or len(set(rows))!=len(rows) or not isinstance(cols,int) or not 1<=cols<=100:
         raise ValueError('行名或列数无效')
     grid={r+str(c) for r in rows for c in range(1,cols+1)}
@@ -157,15 +178,17 @@ def geometry(spec):
         raise ValueError('缺球编号无效或重复')
     if abs(e['left_to_col1']+(cols-1)*px+e['right_to_colN']-w)>1e-6:
         raise ValueError('X 方向尺寸不闭合')
-    if abs(e['top_to_rowA']+(len(rows)-1)*py+e['bottom_to_rowN']-h)>1e-6:
+    if abs(e['top_to_rowA']+sum(row_pitch_y)+e['bottom_to_rowN']-h)>.001:
         raise ValueError('Y 方向尺寸不闭合')
     cx=(e['left_to_col1']-e['right_to_colN'])/2
     cy=(e['bottom_to_rowN']-e['top_to_rowA'])/2
     if any(abs(a-b)>1e-6 for a,b in zip((cx,cy),spec['centers']['BGA'])):
         raise ValueError('阵列中心与边距计算不一致')
-    if max(spec['pad_dia']+2*spec['mask_margin'],spec['paste_dia'])>=min(px,py):
+    if max(spec['pad_dia']+2*spec['mask_margin'],spec['paste_dia'])>=min([px,*row_pitch_y] if row_pitch_y else [px,py]):
         raise ValueError('阻焊开口与相邻焊盘开口相交')
-    pads=[(r+str(c+1),round(-w/2+e['left_to_col1']+c*px,4),round(h/2-e['top_to_rowA']-i*py,4))
+    row_y=[h/2-e['top_to_rowA']]
+    for gap in row_pitch_y:row_y.append(row_y[-1]-gap)
+    pads=[(r+str(c+1),round(-w/2+e['left_to_col1']+c*px,4),round(row_y[i],4))
           for i,r in enumerate(rows) for c in range(cols) if r+str(c+1) not in spec['missing']]
     if not pads:
         raise ValueError('不能生成空焊盘阵列')
@@ -235,6 +258,10 @@ def prepare(spec, output):
 
 
 def verify(output, require_imports=True):
+    candidate=Path(output)/'spec.json'
+    if candidate.is_file() and json.loads(candidate.read_text(encoding='utf8')).get('kind')=='polygon_smd':
+        import polygon_native
+        return polygon_native.verify(output)
     output=Path(output);spec=json.loads((output/'spec.json').read_text(encoding='utf-8'))
     expected={p[0]:p[1:] for p in geometry(spec)}
     adir=output/'allegro'
@@ -377,6 +404,9 @@ def verify_import_checks(spec, output):
 
 
 def build(spec, output, progress, executable='D:/tools/pcb/bin/allegro.exe'):
+    if spec.get('kind')=='polygon_smd':
+        import polygon_native
+        return polygon_native.build(spec,output,progress,executable)
     import subprocess
     import time
     if not Path(executable).is_file():

@@ -12,6 +12,9 @@ import assistant_core as core
 import build_pipeline
 import pcb_workflow
 import footprint_pipeline
+import library_manager
+import model3d_pipeline
+from urllib.parse import urlsplit, parse_qs, quote
 
 BASE = Path(__file__).parent
 STATE = BASE / 'workspace'
@@ -27,6 +30,7 @@ class Workspace:
         self.job = dict(busy=False, message='准备就绪', error='',progress=0)
         self.reference = None
         self.lock = threading.RLock()
+        self.library = library_manager.Library(STATE/'library',STATE/'output')
 
     def save(self):
         core.atomic_json(STATE / 'last-session.json', self.project)
@@ -59,8 +63,14 @@ class Workspace:
                 try: pcb_preview = footprint_pipeline.geometry(pcb['spec'])
                 except (ValueError, KeyError, TypeError): pass
             style=footprint_pipeline.presentation(pcb['spec']) if pcb_preview else None
-            return dict(pcb_preview=pcb_preview, pcb_presentation=style, project=self.project, issues=pending, sections=sections,
-                        job=self.job, reference=self.reference, preview_error=error, environment=self.env)
+            return dict(layout_template=core.layout_rule(self.project),pcb_preview=pcb_preview, pcb_presentation=style, project=self.project, issues=pending, sections=sections,
+                        library_categories=library_manager.CATEGORIES, library_suggestion=library_manager.suggest_category(self.project),
+                        job=self.job, reference=self.reference, preview_error=error, environment=self.env,
+                        model3d_available=self.model3d_available(),model3d_item=getattr(self,'last_model3d_item',None))
+
+    def model3d_available(self):
+        try:model3d_pipeline.runtime();return True
+        except ValueError:return False
 
     def start(self, work, kind='import'):
         self.job = dict(busy=True, message='正在生成并验证…' if kind=='build' else '正在读取资料…', error='',progress=None,kind=kind)
@@ -110,9 +120,10 @@ class Workspace:
                             project = core.load_project(path)
                             pcb_workflow.enrich_project(project)
                         else:
-                            pins = core.extract_pdf(path,progress) if suffix=='.pdf' else core.import_csv(path)
+                            pins = core.extract_pdf(path,progress,package=data.get('package')) if suffix=='.pdf' else core.import_csv(path)
                             project = core.new_project()
                             project.update(device=path.stem.split('_')[0],pins=pins,sources=[core.source_record(path)])
+                            if data.get('package'):project['selected_package']=data['package']
                             project['parts'] = {p.get('part','A'):'导入单元' for p in pins}
                             core.auto_layout(project)
                             if suffix=='.pdf':
@@ -133,12 +144,53 @@ class Workspace:
                 if core.issues(project):
                     raise ValueError('请先处理待核对事项')
                 if action=='build-all': pcb_workflow.check(project)
+                if action=='build-all' and (project.get('model3d') or {}).get('enabled'):
+                    model3d_pipeline.plan(project['pcb']['spec'],project['model3d'])
+                    model3d_pipeline.runtime()
                 def work(progress):
                     builder = pcb_workflow.build if action=='build-all' else build_pipeline.build
                     result = builder(project,env,STATE/'output',progress)
+                    try:
+                        progress('正在整理设计用库并分类入库…')
+                        result['library_item']=self.library.add(project,result)['id']
+                        options=project.get('model3d') or {}
+                        if action=='build-all' and options.get('enabled'):
+                            model=model3d_pipeline.build(project['pcb']['spec'],options,Path(result['directory'])/'model3d',progress)
+                            result['model3d']=model
+                            result['library_item']=self.library.with_model(result['library_item'],model,options)['id']
+                            import shutil
+                            shutil.make_archive(result['directory'],'zip',result['directory'])
+                    except (ValueError,OSError,KeyError) as exc:
+                        result['library_error']='库文件已生成，入库未完成：'+str(exc)
                     with self.lock:
                         self.project['generated'] = result
+                        if result.get('model3d'):self.project['model3d_generated']=result['model3d']
                 self.start(work,kind='build')
+            elif action=='model3d-build':
+                item_id=data.get('id')
+                project=self.library.project(item_id) if item_id else copy.deepcopy(self.project)
+                options=data['options'];spec=(project.get('pcb') or {}).get('spec')
+                if not spec:raise ValueError('请先补齐 PCB 机械参数，再生成 3D')
+                model3d_pipeline.plan(spec,options)
+                def work(progress):
+                    model=model3d_pipeline.build(spec,options,STATE/'output'/('model3d-'+uuid.uuid4().hex[:12]),progress)
+                    if item_id:
+                        item=self.library.with_model(item_id,model,options)
+                        with self.lock:self.last_model3d_item=item['id']
+                    else:
+                        current=project.get('generated') or {}
+                        attached=self.library.with_model(current['library_item'],model,options) if current.get('library_item') else None
+                        with self.lock:
+                            self.snapshot()
+                            self.project['model3d']=dict(options,enabled=True)
+                            self.project['model3d_generated']=model
+                            if attached:self.project['generated']['library_item']=attached['id']
+                self.start(work,kind='build')
+            elif action=='model3d-config':
+                options=data['options']
+                if options.get('enabled'):model3d_pipeline.plan(self.project['pcb']['spec'],options)
+                self.project['model3d']=options
+                self.save()
             elif action=='environment':
                 for key in core.DEFAULT_ENV:
                     self.env[key] = str(data['values'].get(key,self.env[key]))
@@ -147,6 +199,17 @@ class Workspace:
                 if self.history:
                     self.project = self.history.pop()
                     self.save()
+            elif action=='library-add':
+                item=self.library.add(self.project,self.project.get('generated') or {},data.get('category'))
+                self.project['generated']['library_item']=item['id']
+                self.save()
+            elif action=='library-classify':
+                self.library.classify(data['id'],data['category'])
+            elif action=='library-category':
+                self.project['library_category']=self.library._category(data['category'])
+                self.save()
+            elif action=='library-scan':
+                self.library_scan=self.library.scan_history()
             else:
                 candidate = copy.deepcopy(self.project)
                 if action=='new':
@@ -165,6 +228,7 @@ class Workspace:
                     pcb = candidate.setdefault('pcb',{})
                     pcb.update(spec=spec,confirmed=bool(data.get('confirmed')),needs=[])
                     candidate['footprint'] = spec['name']
+                    candidate.pop('model3d',None)
                 elif action=='metadata':
                     for key in ('device','footprint','profile'):
                         if key in data:
@@ -174,6 +238,12 @@ class Workspace:
                         candidate['expected_count'] = int(value) if value else None
                     if data.get('relayout'):
                         core.auto_layout(candidate)
+                    if 'library_category' in data:
+                        candidate['library_category']=self.library._category(data['library_category'])
+                elif action=='library-open':
+                    candidate=self.library.project(data['id'])
+                    candidate['library_category']=self.library.get(data['id'])['category']
+                    self.reference=None
                 elif action=='relayout':
                     core.auto_layout(candidate)
                 elif action=='symbol-geometry':
@@ -220,9 +290,10 @@ class Workspace:
                     raise ValueError('未知操作')
                 self.snapshot()
                 candidate['generated'] = None
+                candidate.pop('model3d_generated',None)
                 self.project = candidate
                 self.save()
-            if action not in ('import','reference','build','build-all'):
+            if action not in ('import','reference','build','build-all','model3d-build'):
                 self.job = dict(busy=False,message='资料已就绪，待生成' if self.project['pins'] else '准备就绪',error='',progress=0)
             return self.view()
 
@@ -244,6 +315,7 @@ def serve(port=8765, open_browser=True):
             self.wfile.write(raw)
 
         def do_GET(self):
+            url=urlsplit(self.path);query=parse_qs(url.query)
             if self.path=='/health':
                 self.reply({'application':'symbol-studio','pcb_unit_validation':3,'pcb_drawing_validation':2,'pcb_orientation_validation':1})
             elif self.path=='/':
@@ -260,10 +332,53 @@ def serve(port=8765, open_browser=True):
                 self.send_header('Cache-Control','no-store')
                 self.end_headers()
                 self.wfile.write(raw)
-            elif self.path=='/api/download' and self.headers.get('X-Workspace-Token')==token:
+            elif url.path in ('/library.js','/library.css','/model3d.js'):
+                raw=(BASE/'web'/url.path[1:]).read_bytes()
+                self.send_response(200)
+                self.send_header('Content-Type','text/javascript; charset=utf-8' if url.path.endswith('.js') else 'text/css; charset=utf-8')
+                self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(raw)
+            elif url.path.startswith('/api/library') and self.headers.get('X-Workspace-Token')==token:
+                try:
+                    with workspace.lock:
+                        if url.path=='/api/library':
+                            self.reply(dict(items=workspace.library.list(),categories=library_manager.CATEGORIES,
+                                scan=getattr(workspace,'library_scan',None)));return
+                        item_id=query.get('id',[''])[0]
+                        if url.path=='/api/library/item':self.reply(workspace.library.detail(item_id));return
+                        if url.path=='/api/library/mesh':self.reply(workspace.library.model_mesh(item_id));return
+                        if url.path!='/api/library/download':raise ValueError('器件库操作无效')
+                        raw=workspace.library.design_bytes(item_id,query.get('source',['0'])[0]=='1')
+                    self.send_response(200);self.send_header('Content-Type','application/zip')
+                    self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+                except (ValueError,OSError,KeyError) as exc:self.reply({'error':str(exc)},400)
+            elif url.path in ('/api/model3d/download','/api/model3d/mesh') and self.headers.get('X-Workspace-Token')==token:
+                try:
+                    with workspace.lock:
+                        g=workspace.project.get('model3d_generated') or {}
+                        folder=workspace.library._source(Path(g.get('directory',''))/'model3d.json').parent
+                        spec=workspace.project['pcb']['spec'];options=workspace.project['model3d']
+                        report=model3d_pipeline.verify(folder,model3d_pipeline.plan(spec,options))
+                        if url.path.endswith('/mesh'):
+                            self.reply(json.loads((folder/'mesh.json').read_text(encoding='utf8')));return
+                        variant=query.get('variant',['complete'])[0]
+                        filename=(report.get('inspection') or {}).get('step') if variant=='inspection' else report['step']
+                        if not filename:raise ValueError('该旧模型没有隐藏玻璃检查版，请重新生成 STEP')
+                        raw=(folder/filename).read_bytes()
+                    self.send_response(200);self.send_header('Content-Type','application/step')
+                    self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+                except (ValueError,OSError,KeyError) as exc:self.reply({'error':str(exc)},400)
+            elif url.path=='/api/download' and self.headers.get('X-Workspace-Token')==token:
                 with workspace.lock:
                     generated = workspace.project.get('generated') or {}
                     core.invalidate_legacy_pcb(workspace.project)
+                    if query.get('full',['0'])[0]!='1':
+                        try:
+                            item=workspace.library.get(generated['library_item']) if generated.get('library_item') else workspace.library.add(workspace.project,generated)
+                            raw=workspace.library.design_bytes(item['id'],query.get('source',['0'])[0]=='1')
+                        except (ValueError,OSError,KeyError) as exc:
+                            self.reply({'error':str(exc)},400);return
+                        self.send_response(200);self.send_header('Content-Type','application/zip')
+                        self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw);return
                     file = Path(generated.get('archive','')).resolve()
                     allowed = (STATE/'output').resolve()
                     if not file.is_relative_to(allowed) or file.suffix!='.zip' or not file.is_file():

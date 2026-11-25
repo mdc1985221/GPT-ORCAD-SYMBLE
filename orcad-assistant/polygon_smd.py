@@ -15,6 +15,7 @@ def validate(spec):
     ids=set();coppers=[]
     for p in spec['pads']:
         if not re.fullmatch('[A-Za-z0-9]+',p['id']) or p['id'] in ids:raise ValueError('脚号重复或无效')
+        if p.get('role','electrical') not in ('electrical','mounting'):raise ValueError('焊盘角色无效')
         ids.add(p['id'])
         if len(p['xy'])!=2 or any(not math.isfinite(v) for v in p['xy']):raise ValueError('连接点坐标无效')
         shapes={}
@@ -64,7 +65,11 @@ def native_assets(spec):
 
 def svg(spec,layers=('copper','mask','paste'),numbers=True):
     colors=dict(copper='#4f7bb0',mask='#439c71',paste='#e17b50');w,h=spec['body']
-    chunks=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2.35 -2 4.7 4" style="width:100%;height:100%;background:#fafcff"><rect x="{-w/2}" y="{-h/2}" width="{w}" height="{h}" fill="#eef1f8" stroke="#99a5b8" stroke-width=".015"/>']
+    ext=[v for pad in spec['pads'] for layer in ('copper','mask','paste') for contour in pad[layer] for v in contour]
+    x0=min(v[0] for v in ext)-.8;x1=max(v[0] for v in ext)+.8;y0=-max(v[1] for v in ext)-.8;y1=-min(v[1] for v in ext)+.8
+    viewbox=f'{x0} {y0} {x1-x0} {y1-y0}'
+    chunks=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}" style="width:100%;height:100%;background:#fafcff">']
+    if spec.get('draw_body',True):chunks.append(f'<rect x="{-w/2}" y="{-h/2}" width="{w}" height="{h}" fill="#eef1f8" stroke="#99a5b8" stroke-width=".015"/>')
     for layer in layers:
         for pad in spec['pads']:
             for contour in pad[layer]:
@@ -73,11 +78,19 @@ def svg(spec,layers=('copper','mask','paste'),numbers=True):
     if numbers:
         for p in spec['pads']:
             x,y=p['xy'];chunks.append(f'<text x="{x}" y="{-y}" font-size=".105" text-anchor="middle" dominant-baseline="central" fill="#fff">{p["id"]}</text>')
-    chunks.append('<circle cx="-1.9" cy="-1.5" r=".045" fill="#db893f"/></svg>')
+    if spec.get('family')!='connector':chunks.append('<circle cx="-1.9" cy="-1.5" r=".045" fill="#db893f"/>')
+    chunks.append('</svg>')
     return ''.join(chunks)
 
 def preview(spec,output):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
     title=html.escape(spec['name']);blocks=''.join(f'<section><h2>{label}</h2><div style="height:470px">{svg(spec,layers)}</div></section>' for label,layers in [('铜 / 阻焊 / 锡膏叠加',('copper','mask','paste')),('铜焊盘',('copper',)),('阻焊开口',('mask',)),('锡膏开口',('paste',))])
+    if spec.get('family')=='connector':
+        electrical=sum(p.get('role','electrical')=='electrical' for p in spec['pads'])
+        mounting=len(spec['pads'])-electrical
+        notes=''.join(f'<li>{html.escape(str(n))}</li>' for n in spec.get('unresolved',[])+spec.get('notes',[]))
+        path=output/(spec['name']+'_preview.html')
+        path.write_text(f'<!doctype html><meta charset="utf-8"><title>{title}</title><style>body{{font:15px Segoe UI,Microsoft YaHei,sans-serif;background:#f2f5fa;color:#24344c;margin:32px}}main{{max-width:1150px;margin:auto}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:20px}}section{{background:white;padding:18px;border-radius:14px}}h2{{font-size:17px}}li,p{{line-height:1.8}}</style><main><h1>{title} · 连接器</h1><p>PCB 顶视 · mm · 蓝=铜，绿=阻焊开口，橙=锡膏。{electrical} 个电气接点、{mounting} 个机械固定焊盘。MP 标签仅供预览识别，原生固定焊盘不编号。预览不等于目标设计验收。</p><div class="grid">{blocks}</div><ul>{notes}</ul></main>',encoding='utf8')
+        return str(path)
     (output/(spec['name']+'_preview.html')).write_text(f'<!doctype html><meta charset="utf-8"><title>{title}</title><style>body{{font:15px Segoe UI,Microsoft YaHei,sans-serif;background:#f2f5fa;color:#24344c;margin:32px}}main{{max-width:1150px;margin:auto}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:20px}}section{{background:white;padding:18px;border-radius:14px}}h2{{font-size:17px}}p{{line-height:1.8}}</style><main><h1>{title} · 异形 QFN</h1><p>官方图 p47 顶视方向 · mm · 蓝=铜，绿=阻焊开口，橙=锡膏。14 个实体引脚；10 号 SMD，其他 NSMD。预览不等于目标工程制造验收。</p><div class="grid">{blocks}</div><p>PCB 焊盘与器件端子不同；3D 端子需另按 p46。工艺预设、参考尺寸及验证范围见报告。</p></main>',encoding='utf8')
     return str(output/(spec['name']+'_preview.html'))

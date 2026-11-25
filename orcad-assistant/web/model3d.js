@@ -6,6 +6,7 @@ async function model3dDialog(itemId=null){
  const detail=itemId?libraryDetail:null,s=detail?detail.pcb_spec||null:state.project.pcb?.spec;
  // Symbol-only saved versions may still contain a mechanical snapshot.
  if(!s){toast('请先载入编辑，补齐 CSP / BGA 机械尺寸');return}
+ if(s.family==='connector'){toast('此连接器当前提供符号与PCB；3D需补齐本体相对焊盘位置后建模');return}
  if(s.kind==='polygon_smd'){polygonModelDialog(s,itemId);return}
  const options=detail?(detail.model3d?.plan||{}):(state.project.model3d||{});
  dialog(`<h2>CSP / BGA 简化 3D 模型</h2><p>本体 ${s.body.join(' × ')} mm · 球径 ${s.ball_dia} mm。XY 与 PCB 一致，Z=0 为板面接触点，向上为正。</p><div class="pcb-fields"><div class="field"><label>总高度，包含焊球（mm）</label><input id="model-total" type="number" step="any" value="${esc(options.total_height??s.height_nominal??s.height_max??'')}"></div><div class="field"><label>焊球突出高度（mm）</label><input id="model-ball" type="number" step="any" value="${esc(options.ball_height??s.ball_height??s.ball_dia)}"></div></div><p class="pcb-warning">${s.sensor_array?`将生成感光区域 ${s.sensor_array.join(" × ")} mm、芯片表面、${s.glass_thickness??.4} mm 玻璃及全部焊球。玻璃透明显示；${s.top_to_wafer!=null?`感光面按规格书 C3=${s.top_to_wafer} mm 定位。`:"感光面深度采用外观近似。"}内部支撑结构为简化示意。`:`焊球高度优先取规格书，缺失时暂用球径。生成矩形本体和球冠，不包含玻璃盖板、镜头、倒角及内部结构。`}</p><label class="pcb-check"><input id="model-confirm" type="checkbox"> 我已核对方向及高度，接受此简化模型用于装配参考。</label>${itemId?'':'<label class="pcb-check"><input id="model-enabled" type="checkbox" checked> 后续“符号 + PCB”联合生成时同时生成 STEP</label>'}<div class="actions"><button onclick="closeDialog()">取消</button>${!itemId?'<button id="model-config">仅保存联合生成设置</button>':''}<button class="primary" id="model-generate" ${state.model3d_available?'':'disabled'}>生成并验证 STEP</button></div>${state.model3d_available?'':'<p class="pcb-warning">3D 引擎尚未安装，请按 README 安装可选依赖；OLB 和 PCB 功能不受影响。</p>'}${!itemId&&state.project.model3d_generated?'<button id="model-existing">预览 / 下载已生成模型</button>':''}`);
@@ -88,7 +89,7 @@ async function showCurrentModel(){
 }
 async function libraryModelPreview(target,item){
  target.innerHTML='<div class="catalog-empty">正在读取 3D 模型…</div>';
- try{const mesh=await api('/api/library/mesh?id='+encodeURIComponent(item.id));if(!target.isConnected||libraryPreview!=='3d'||libraryDetail?.id!==item.id)return;drawModel3D(target,mesh)}catch(e){target.textContent=e.message}
+ try{const mesh=await api((item.history?'/api/library/history/mesh':'/api/library/mesh')+'?id='+encodeURIComponent(item.id));if(!target.isConnected||libraryPreview!=='3d'||libraryDetail?.id!==item.id)return;drawModel3D(target,mesh)}catch(e){target.textContent=e.message}
 }
 function drawModel3D(target,data){
  target._disposeModel?.();
@@ -114,7 +115,7 @@ function drawModel3D(target,data){
  for(const [name,offset] of [['position',0],['normal',12],['color',24]]){const loc=gl.getAttribLocation(program,name);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,36,offset)}
  const opacityLocation=gl.getUniformLocation(program,'opacity');const angleLocation=gl.getUniformLocation(program,'angle'),scaleLocation=gl.getUniformLocation(program,'scale'),materialLocation=gl.getUniformLocation(program,'material'),baseLocation=gl.getUniformLocation(program,'baseColor'),studioLocation=gl.getUniformLocation(program,'studio');gl.enable(gl.DEPTH_TEST);gl.clearColor(0,0,0,0);
  target.querySelector('.model-dimensions').textContent=bounds.slice(3).map((v,j)=>(v-bounds[j]).toFixed(3)).join(' × ')+' mm · 简化模型';
- const initialPitch=data.meshes.some(m=>m.name==="SENSOR_ARRAY")?.72:2.25;let yaw=-.45,pitch=initialPitch,zoom=1.6,drag=null,glassVisible=true,annotations=false,studio=true,opaqueGlass=false;
+ const initialPitch=Number.isFinite(data.initial_pitch)?data.initial_pitch:(data.meshes.some(m=>m.name==="SENSOR_ARRAY")?.72:2.25);let yaw=-.45,pitch=initialPitch,zoom=1.6,drag=null,glassVisible=true,annotations=false,studio=true,opaqueGlass=false;
  const styleButton=document.createElement('button');styleButton.type='button';styleButton.dataset.material='';styleButton.style.cssText='font-size:12px;padding:5px 9px;border:1px solid #dce4ef;border-radius:6px;background:#fff;color:#345';styleButton.textContent='工程配色';controls.appendChild(styleButton);
  const opacityButton=document.createElement('button');opacityButton.type='button';opacityButton.style.cssText=styleButton.style.cssText;opacityButton.textContent='玻璃设为不透明';if(optical)controls.appendChild(opacityButton);
  if(controls.querySelector('[data-annotations]'))controls.querySelector('[data-annotations]').textContent='显示标注';

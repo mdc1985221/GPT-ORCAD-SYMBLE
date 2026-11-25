@@ -21,6 +21,11 @@ def presentation(spec):
     return ball_presentation(spec)
 
 
+def electrical_ids(spec):
+    if spec.get('kind')=='polygon_smd':return {p['id'] for p in spec['pads'] if p.get('role')!='mounting'}
+    return {p[0] for p in geometry(spec)}
+
+
 def native_asset_names(spec,report=None):
     if spec.get('kind')=='polygon_smd':
         if not report or report.get('status')!='PASS':raise ValueError('异形封装需要成功的原生验证记录')

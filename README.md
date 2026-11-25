@@ -165,3 +165,14 @@ python -m unittest discover -s tests
 [异形 QFN 与电源管理布局演示、下载及限制](examples/TPS543620-QFN/README.md)。官方规格书通过TI链接获取，本次不上传原PDF或公司库。
 
 安装：`pip install -r orcad-assistant/requirements.txt`；3D另装`orcad-assistant/requirements-model3d.txt`，详见[应用说明](orcad-assistant/README.md)。启动仍使用`启动符号助手.cmd`或`python orcad-assistant/web_app.py`；原生库生成需本机Cadence环境。
+
+<!-- history-connector-update-20261125 -->
+## 2026-11-25：历史封装检索与连接器规则
+
+当前 main 新增历史封装检索：按型号、封装、分类和PIN数搜索，筛选文件类型及来源，预览原理符号/PCB/已有3D，放大查看、复制库路径及下载设计文件。入口为侧栏“历史封装检索”，也可访问本地服务的 `/#history`。历史记录保留待复核状态；预览优先读取构建快照，避免后续草稿冒充旧产物。
+
+新增连接器无源符号、单排/双排DIP通孔分类与可复用SKILL，完成已核对12P贴片连接器适配及40P排母原生/STEP样例验证。通用新连接器的PDF识别、参数录入和Web一键PCB/3D联合生成仍需继续接入；铜/阻焊工艺预设与无尺寸外观近似需复核，不能宣称任意规格书均可直接生产。
+
+106项单元测试及真实浏览器检索、预览、放大、导航和下载检查通过。本次为Python/Web源码更新，旧EXE未重打包，未新增规格书或公司库产物。其他电脑只会检索其本地已有历史文件。
+
+[本次Markdown开发小结与待完善事项](开发小结-2026-11-25.md) · [规格书到器件库流程](规格书到器件库-建库与验收流程.md) · [连接器SKILL](skills/cadence-connector-library/SKILL.md)

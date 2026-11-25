@@ -46,6 +46,7 @@ function renderProgress(){
 
 function renderPolygonPCB(){
  const pcb=state.project.pcb,s=pcb.spec;
+ if(s.family==='connector'){renderConnectorPCB();return}
  $('pcb').innerHTML=`<p class="pcb-note">异形 QFN · ${esc(s.name)} · 顶视 / mm · 铜、阻焊和锡膏独立轮廓</p><div class="pcb-grid"><div><div class="pcb-metrics"><div><small>本体尺寸</small>${s.body.join(' × ')} mm</div><div><small>引脚 / 最大高度</small>${s.pads.length} / ${s.height_max} mm</div></div><p>10 号脚采用 SMD，其余采用 NSMD。蓝=铜，绿=阻焊，橙=锡膏；切换图层核对不同轮廓。</p><p>此型号使用已核对的官方尺寸模板；异形轮廓不能用圆形焊盘参数调整。</p><label class="pcb-check"><input id="polygon-confirm" type="checkbox" ${pcb.confirmed?'checked':''}> 我已核对方向、独立焊盘轮廓及参考工艺。</label><div class="actions"><button class="primary" id="polygon-save">确认并保存</button></div><details><summary>规格书来源与采用边界</summary><div class="source">${(pcb.sources||[]).map(x=>`p${x.page} · ${esc(x.field)}: ${esc(x.text)}`).join('<br>')}</div></details></div><div><div class="pcb-layers">${Object.entries({copper:'铜',mask:'阻焊开口',paste:'锡膏'}).map(([k,v])=>`<label><input type="checkbox" checked onchange="polygonLayers.${k}=this.checked;drawPolygonPCB()">${v}</label>`).join('')}</div><div id="pcb-preview" class="pcb-preview"></div><p class="pcb-note">滚轮缩放 / 右键平移 · 异形焊盘依赖 SSM 轮廓文件，下载时须同时保留 PAD / PSM / SSM。</p>${(pcb.notes||[]).map(n=>`<p class="pcb-note">${esc(n)}</p>`).join('')}</div></div>`;
  $('polygon-save').onclick=async()=>{if(!$('polygon-confirm').checked){toast('请先核对并勾选确认');return}await act({action:'pcb',spec:s,confirmed:true})};
  drawPolygonPCB();bindPCBPreview();
@@ -54,7 +55,14 @@ const polygonLayers={copper:true,mask:true,paste:true};
 function drawPolygonPCB(){
  const target=$('pcb-preview'),style=state?.pcb_presentation;if(!target||style?.kind!=='polygon_smd')return;
  target.innerHTML=style.svg;let svg=target.querySelector('svg');svg.id='pcb-svg';
- svg.setAttribute('viewBox',`${pcbPan.x-2.35/pcbZoom} ${pcbPan.y-2/pcbZoom} ${4.7/pcbZoom} ${4/pcbZoom}`);
+ const base=svg.getAttribute('viewBox').split(/\s+/).map(Number),cw=base[2]/pcbZoom,ch=base[3]/pcbZoom;svg.setAttribute('viewBox',`${base[0]+base[2]/2-cw/2+pcbPan.x} ${base[1]+base[3]/2-ch/2+pcbPan.y} ${cw} ${ch}`);
  for(const [layer,visible] of Object.entries(polygonLayers))svg.querySelectorAll(`[data-layer="${layer}"]`).forEach(n=>n.style.display=visible?'':'none');
  $('zoom').textContent=Math.round(pcbZoom*100)+'%';
+}
+
+function renderConnectorPCB(){
+ const pcb=state.project.pcb,s=pcb.spec;
+ $('pcb').innerHTML=`<p class="pcb-note">${esc(s.label)} · 单排12个电气接点＋2个机械固定焊盘 · mm</p><div class="pcb-grid"><div><div class="pcb-metrics"><div><small>信号焊盘 / 间距</small>0.8 × 1.6 / 1.25 mm</div><div><small>固定焊盘 / 总高上限</small>2.1 × 3.0 / ${s.height_max} mm</div></div><p>原理符号：奇数左、偶数右；PCB按单排布局。MP1/MP2为无编号机械焊盘，不自动接GND。</p><p class="pcb-warning">1脚方向是预览约定，尚未得到厂家图确认；本体相对焊盘的Y定位未标注，当前仅输出真实焊盘，装配轮廓不凭像素推算。Place Bound采用焊盘包络外扩预设。</p><label><input id="connector-direction" type="checkbox" ${s.orientation_confirmed?'checked':''}> 我已核对实物/厂家编号，确认图中左到右1～12。</label><p><label><input id="connector-process" type="checkbox" ${pcb.confirmed?'checked':''}> 接受阻焊扩展、锡膏和当前放置边界用于此版本；目标工程再验收。</label></p><div class="actions"><button id="connector-save" class="primary">确认参数</button></div><details><summary>来源与尺寸推导</summary><div class="source">${pcb.sources.map(x=>`p${x.page} · ${esc(x.field)}：${esc(x.text)}`).join('<br>')}</div></details></div><div><div class="pcb-layers">${Object.entries({copper:'铜',mask:'阻焊',paste:'锡膏'}).map(([k,v])=>`<label><input type="checkbox" ${polygonLayers[k]?'checked':''} onchange="polygonLayers.${k}=this.checked;drawPolygonPCB()">${v}</label>`).join('')}</div><div class="pcb-preview" id="pcb-preview"></div><p>滚轮缩放 · 右键平移 · 机械固定脚与电气引脚分开</p></div></div>`;
+ $('connector-save').onclick=async()=>{if(!$('connector-direction').checked||!$('connector-process').checked){toast('请先核对1脚方向并接受工艺/边界，预览不需确认');return}const spec=structuredClone(s);spec.orientation_confirmed=true;spec.process_accepted=true;if(await act({action:'pcb',spec,confirmed:true}))toast('已保存人工确认，可以生成')};
+ drawPolygonPCB();bindPCBPreview();
 }

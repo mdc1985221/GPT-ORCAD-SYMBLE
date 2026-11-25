@@ -10,7 +10,7 @@ from templates import gen_sensor_symbol as generator
 
 SIDES = ('TOP', 'BOT', 'LEFT', 'RIGHT')
 SIDE_LABELS = {'TOP': '顶部', 'BOT': '底部', 'LEFT': '左侧', 'RIGHT': '右侧'}
-TYPES = ('PWR', 'GND', 'NC', 'IN', 'OUT', 'IO', 'ANA')
+TYPES = ('PWR', 'GND', 'NC', 'IN', 'OUT', 'IO', 'ANA', 'PASS')
 DEFAULT_ENV = dict(allegro='D:/tools/pcb/bin/allegro.exe',tclsh='D:/tools/tcltk/8.4/bin/tclsh84.exe',
                    dll='D:/tools/capture/orDb_Dll_Tcl.dll', bin='D:/tools/bin',
                    src_lib='D:/tools/capture/library/MiscLinear.olb', src_part='LM555')
@@ -75,7 +75,7 @@ def load_project(path):
     project = json.loads(Path(path).read_text(encoding='utf-8-sig'))
     if project.get('version') != 1 or not isinstance(project.get('pins'), list):
         raise ValueError('不是受支持的符号项目文件')
-    if project.get('profile') not in ('auto', 'sensor', 'power', 'generic', 'simple'):
+    if project.get('profile') not in ('auto', 'sensor', 'power', 'generic', 'simple', 'connector'):
         raise ValueError('未知布局模板')
     if not isinstance(project.get('pitch'), int) or project['pitch'] < 10 or project['pitch'] % 10:
         raise ValueError('项目间距必须是正的 10 MIL 整数倍')
@@ -226,6 +226,9 @@ def chinese_signal_pins(page, number, path):
 
 def extract_pdf(path, progress=lambda msg: None, package=None):
     """Text tables first. Preserve page, bbox and conflicting observations."""
+    from connector_profile import profile as connector_profile
+    connector=connector_profile(path) if Path(path).is_file() else None
+    if connector:return connector['pins']
     from polygon_smd import profile as polygon_profile
     reviewed=polygon_profile(path) if Path(path).is_file() else None
     if reviewed:return reviewed['pins']
@@ -384,12 +387,13 @@ def signal_order(pin):
     return (3, ((1, priorities.get(name, 10)),) + natural(name), 0, natural(pin['id']))
 
 
-LAYOUT_PROFILES={'auto':'自动推荐','sensor':'图像传感器','power':'电源管理','generic':'通用 IC','simple':'按脚号排列'}
+LAYOUT_PROFILES={'auto':'自动推荐','sensor':'图像传感器','power':'电源管理','generic':'通用 IC','simple':'按脚号排列','connector':'连接器 · 奇左偶右'}
 
 
 def recommended_profile(project):
     names={p['name'].upper() for p in project['pins']}
     identity=' '.join(str(project.get(k,'')) for k in ('device','footprint'))
+    if ((project.get('pcb') or {}).get('spec') or {}).get('family')=='connector' or (names and all(p.get('type')=='PASS' for p in project['pins'])):return 'connector'
     if re.search(r'TPS54\d+',identity,re.I) or ({'VIN','SW','FB'}<=names):return 'power'
     if any(high_speed(n) for n in names) or re.search(r'\b(?:GC\d{4}|SC\d{4}|OS04A10|IMX\d+)\b',identity,re.I):return 'sensor'
     return 'generic'
@@ -406,7 +410,7 @@ def layout_rule(project):
     rules={'sensor':'上电源 · 下 GND｜左控制 · 右 MIPI',
            'power':'上供电 · 下地｜左控制 · 右输出/反馈',
            'generic':'上电源 · 下地｜左输入/双向 · 右输出',
-           'simple':'按脚号两侧排列｜EP 单独置底'}
+           'simple':'按脚号两侧排列｜EP 单独置底','connector':'奇数左 · 偶数右｜按脚号由上到下'}
     return dict(profile=chosen,label=LAYOUT_PROFILES[chosen],recommended=LAYOUT_PROFILES[recommended_profile(project)],rule=rules[chosen])
 
 
@@ -414,6 +418,12 @@ def auto_layout(project):
     project.pop('symbol_layout',None)
     pins = project['pins']
     profile=effective_profile(project)
+    if profile=='connector':
+        for p in pins:
+            p.update(side='LEFT' if int(p['id'])%2 else 'RIGHT',group='连接器')
+        # Capture/SVG use +Y down: ascending IDs must be placed first.
+        pins.sort(key=lambda p:(SIDES.index(p['side']),int(p['id'])))
+        return
     if profile == 'simple':
         exposed = [p for p in pins if re.fullmatch(r'(?:EP|PAD)\d*', p['id'])]
         ordered = sorted([p for p in pins if p not in exposed], key=lambda p: natural(p['id']))

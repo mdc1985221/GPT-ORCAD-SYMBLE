@@ -45,13 +45,15 @@ def read_code(file='readback.csv',design=True):
  (foreach layer (list (strcat "ETCH/" (axlConductorTopLayer)) "PIN/SOLDERMASK_TOP" "PIN/PASTEMASK_TOP")
   (setq pad (axlDBGetPad pin layer "REGULAR"))
   (unless (equal pad->figureName "SHAPE") (error "Custom shape missing"))
-  (fprintf o "P,%s,%s,%.8f,%.8f,0\\n" pin->number layer (times factor (car pin->xy)) (times factor (cadr pin->xy)))
+  (setq pid pin->number)
+  (unless (and pid (not (equal pid ""))) (setq pid (sprintf nil "MECH%.5f" (car pin->xy))))
+  (fprintf o "P,%s,%s,%.8f,%.8f,0\\n" pid layer (times factor (car pin->xy)) (times factor (cadr pin->xy)))
   (setq polygons (axlPolyFromDB pin ?layer layer))
   (unless (equal (length polygons) 1) (error "Unexpected contour count"))
   (foreach polygon polygons
-   (fprintf o "A,%s,%s,0,0,%.9f\\n" pin->number layer (times factor factor (abs polygon->area)))
+   (fprintf o "A,%s,%s,0,0,%.9f\\n" pid layer (times factor factor (abs polygon->area)))
    (foreach v polygon->vertices
-    (fprintf o "V,%s,%s,%.8f,%.8f,%.8f\\n" pin->number layer (times factor (caar v)) (times factor (cadar v)) (cadr v))))))
+    (fprintf o "V,%s,%s,%.8f,%.8f,%.8f\\n" pid layer (times factor (caar v)) (times factor (cadar v)) (cadr v))))))
 (close o)
 '''
 
@@ -84,9 +86,15 @@ def prepare(spec,output):
         for layer,native in [('copper','(axlConductorTopLayer)'),('mask','"SOLDERMASK_TOP"'),('paste','"PASTEMASK_TOP"')]:
             coords=p[layer][0];w=max(a for a,b in coords)-min(a for a,b in coords);h=max(b for a,b in coords)-min(b for a,b in coords)
             code.append(f'(make_axlPadStackPad ?layer {native} ?type \'REGULAR ?figure "{padshapes[p["id"]][layer]}" ?figureSize {w+.0002:.5f}:{h+.0002:.5f})')
-        code += ['))',f'(setq ps (axlDBCreatePadStack "{assets[p["id"]]}" nil pad_list t))','(unless ps (error "Padstack creation failed"))',f'(unless (axlDBCreatePin ps {pt(p["xy"])} (make_axlPinText ?number "{p["id"]}" ?offset (list 0.0 -0.0267) ?text (make_axlTextOrientation ?textBlock "1" ?rotation 0.0 ?justify "center"))) (error "Pin failed"))', '(unless (axlPadstackToDisk ps->name) (error "PAD export failed"))']
+        code += ['))',f'(setq ps (axlDBCreatePadStack "{assets[p["id"]]}" nil pad_list t))','(unless ps (error "Padstack creation failed"))',f'(unless (axlDBCreatePin ps {pt(p["xy"])} '+('nil' if p.get('role')=='mounting' else f'(make_axlPinText ?number "{p["id"]}" ?offset (list 0.0 -0.0267) ?text (make_axlTextOrientation ?textBlock "1" ?rotation 0.0 ?justify "center"))')+') (error "Pin failed"))', '(unless (axlPadstackToDisk ps->name) (error "PAD export failed"))']
     w,h=spec['body'];e=spec['courtyard_excess']
-    code += [f'(axlDBCreateLine {points([[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]])} .03 "PACKAGE GEOMETRY/ASSEMBLY_TOP")',f'(setq bound (car (axlDBCreateRectangle (list {pt([-w/2-e,-h/2-e])} {pt([w/2+e,h/2+e])}) t "PACKAGE GEOMETRY/PLACE_BOUND_TOP")))',f'(unless (axlDBAddProp (list bound) (list (list "PACKAGE_HEIGHT_MAX" "{spec["height_max"]}mm") (list "PACKAGE_HEIGHT_MIN" "{spec["height_min"]}mm"))) (error "Height failed"))',
+    if spec.get('draw_body',True):code.append(f'(axlDBCreateLine {points([[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]])} .03 "PACKAGE GEOMETRY/ASSEMBLY_TOP")')
+    if spec.get('family')=='connector':
+        coords=[xy for pad in spec['pads'] for xy in pad['copper'][0]]
+        lo=[min(q[0] for q in coords)-e,min(q[1] for q in coords)-e]
+        hi=[max(q[0] for q in coords)+e,max(q[1] for q in coords)+e]
+    else:lo=[-w/2-e,-h/2-e];hi=[w/2+e,h/2+e]
+    code += [f'(setq bound (car (axlDBCreateRectangle (list {pt(lo)} {pt(hi)}) t "PACKAGE GEOMETRY/PLACE_BOUND_TOP")))',f'(unless (axlDBAddProp (list bound) (list (list "PACKAGE_HEIGHT_MAX" "{spec["height_max"]}mm") (list "PACKAGE_HEIGHT_MIN" "{spec["height_min"]}mm"))) (error "Height failed"))',
         '(setq tp (axlGetParam "paramTextBlock:2"))','tp->width = .35','tp->height = .5','tp->photoWidth = .15','tp->charSpace = .04','(axlSetParam tp)',f'(axlDBCreateText "#REFDES" {pt([0,h/2+.7])} (make_axlTextOrientation ?textBlock "2" ?rotation 0.0 ?justify "center") "REF DES/SILKSCREEN_TOP")',
         f'(unless (equal (length (axlDBGetDesign)->pins) {len(spec["pads"])}) (error "Pin count mismatch"))',
         f'(unless (axlCompileSymbol ?symbol "{spec["name"]}" ?silent t ?silentOnOverwrite t) (error "PSM compile failed"))',f'(unless (axlSaveDesign ?design "{spec["name"]}.dra" ?noMru t ?noConfirm t) (error "DRA save failed"))']
@@ -99,6 +107,15 @@ def check_contours(spec,file,unit='millimeters',offset=(0,0)):
     rows=list(csv.DictReader(Path(file).open()));u=[r for r in rows if r['record']=='U']
     if len(u)!=1 or u[0]['id']!=unit or abs(float(u[0]['x'])-(1 if unit=='millimeters' else .0254))>1e-8:raise ValueError('异形焊盘数据库单位错误')
     expected={p['id']:p for p in spec['pads']};layers={'copper':None,'mask':'PIN/SOLDERMASK_TOP','paste':'PIN/PASTEMASK_TOP'}
+    mechanical={}
+    for row in rows:
+        if row['record']=='P' and row['id'].startswith('MECH'):
+            xy=[float(row['x'])-offset[0],float(row['y'])-offset[1]]
+            found=[p['id'] for p in spec['pads'] if p.get('role')=='mounting' and max(abs(a-b) for a,b in zip(xy,p['xy']))<.00016]
+            if len(found)!=1:raise ValueError('无编号机械焊盘坐标不匹配')
+            mechanical[row['id']]=found[0]
+    for row in rows:
+        if row['id'] in mechanical:row['id']=mechanical[row['id']]
     pins=[r for r in rows if r['record']=='P']
     if len(pins)!=len(expected)*3 or len({(r['id'],r['layer']) for r in pins})!=len(expected)*3:raise ValueError('回读脚号或图层重复/缺失')
     for pin in pins:

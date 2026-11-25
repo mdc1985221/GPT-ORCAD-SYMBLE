@@ -49,13 +49,14 @@ function renderLibraryPreview(){
  if(libraryPreview==='pcb'&&!i.pcb){t.innerHTML='<div class="catalog-empty"><strong>此版本仅有原理符号</strong>载入编辑、补齐 PCB 参数后联合生成即可。</div>';return}
  let box,markup='';
  if(libraryPreview==='symbol'){
-  const s=i.sections.find(s=>s.part===libraryPart)||i.sections[0];box=[-70,-70,s.width+140,s.height+140];
+  const s=i.sections.find(s=>s.part===libraryPart)||i.sections[0];if(!s){t.innerHTML='<div class="catalog-empty">这个历史版本没有可用的原理符号布局参数。</div>';return}box=[-70,-70,s.width+140,s.height+140];
   markup=`<rect width="${s.width}" height="${s.height}" fill="white" stroke="#98a8c5"/>`;
   for(let [id,name,type,x,y,hx,hy] of s.pins){const vertical=x===hx,tx=x===0?x+7:x===s.width?x-7:x,ty=y===0?y+8:y===s.height?y-8:y+2,anchor=x===s.width||y===0?'end':'start';markup+=`<g><line x1="${x}" y1="${y}" x2="${hx}" y2="${hy}" stroke="#6479d8"/><text x="${tx}" y="${ty}" ${vertical?`transform="rotate(-90 ${tx} ${ty})"`:''} text-anchor="${anchor}" font-size="7" fill="#52637c">${esc(name)}</text><text x="${vertical?x-3:(x+hx)/2}" y="${vertical?(y+hy)/2:y-4}" font-size="5" fill="#8a97ad">${esc(id)}</text></g>`}
   markup+=`<text x="${s.width/2}" y="${s.height/2}" text-anchor="middle" font-size="12" fill="#52637c">${esc(i.device)}</text>`;
  }else{
+  if(!i.pcb_spec||!i.presentation){t.innerHTML='<div class="catalog-empty">封装文件仍可检索下载，但缺少可用的预览参数。原生封装请用 Allegro 打开复核。</div>';return}
   const s=i.pcb_spec,[w,h]=s.body;box=[-w/2-4,-h/2-2,w+8,h+4];markup=`<rect x="${-w/2}" y="${-h/2}" width="${w}" height="${h}" fill="white" stroke="#98a8c5" stroke-width=".035"/>`;
-  if(s.kind==='polygon_smd'){t.innerHTML=i.presentation.svg;bindPolygonLibrary(t);return}
+  if(i.presentation.kind==='polygon_smd'){t.innerHTML=i.presentation.svg;bindPolygonLibrary(t);return}
   markup+=i.pads.map(([id,x,y])=>`<g data-library-pad="${esc(id)}"><circle cx="${x}" cy="${-y}" r="${s.pad_dia/2}" fill="#6687c8"/><text x="${x}" y="${-y}" dominant-baseline="central" text-anchor="middle" font-size="${i.presentation.pin.height}" fill="white">${esc(id)}</text></g>`).join('');
   for(let mark of i.presentation.annotations)markup+=`<path d="${mark.segments.map(([[x,y],[a,b]])=>`M ${x} ${-y} L ${a} ${-b}`).join(' ')}" stroke="${mark.color}" stroke-width=".015" fill="none"/><text x="${mark.label[0]}" y="${-mark.label[1]}" text-anchor="${mark.justify==='right'?'end':'start'}" font-size=".16" fill="${mark.color}">${esc(mark.text)}</text>`;
  }
@@ -70,7 +71,7 @@ async function scanLibrary(){if(state.job.busy){toast('请等待当前生成任�
 async function downloadLibrary(id,source=false){await downloadCadence('/api/library/download?id='+encodeURIComponent(id)+'&source='+(source?'1':'0'),(libraryDetail?.device||'device')+'-cadence-library.zip')}
 async function downloadCadence(url,name){try{const r=await fetch(url,{headers:{'X-Workspace-Token':TOKEN}});if(!r.ok){let e=await r.json();throw Error(e.error||'下载未完成')}const a=document.createElement('a');a.href=URL.createObjectURL(await r.blob());a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}catch(e){toast(e.message)}}
 function downloadDesignDialog(){dialog(`<h2>下载 Cadence 库</h2><p>设计用文件包含已生成的 OLB、PSM、PAD 和 STEP。未生成的项目不放入下载包。</p><label><input id="download-dra" type="checkbox"> 加入可编辑 DRA 源封装</label><div class="actions">${state.project.generated?.archive?'<button id="download-full">完整工程（含诊断）</button>':''}<button onclick="closeDialog()">取消</button><button class="primary" id="download-design">下载设计用库</button></div>`);$('download-design').onclick=()=>{downloadCadence('/api/download?source='+($('download-dra').checked?'1':'0'),(state.project.device||'device')+'-cadence-library.zip');closeDialog()};if($('download-full'))$('download-full').onclick=()=>{downloadCadence('/api/download?full=1',(state.project.device||'device')+'-full-project.zip');closeDialog()}}
-window.addEventListener('hashchange',()=>{if(!state)return;const hash=location.hash;if(hash==='#library'){if(!document.body.classList.contains('library-mode'))libraryPage()}else if(document.body.classList.contains('library-mode'))editorPage(hash);else if(hash==='#pcb')pcbTab();else tab(false)});
+window.addEventListener('hashchange',()=>{if(!state)return;const hash=location.hash;if(hash==='#history'){if(document.body.dataset.catalog!=='history'||!document.body.classList.contains('library-mode'))historyPage()}else if(hash==='#library'){if(document.body.dataset.catalog!=='library'||!document.body.classList.contains('library-mode'))libraryPage()}else if(document.body.classList.contains('library-mode'))editorPage(hash);else if(hash==='#pcb')pcbTab();else tab(false)});
 
 function bindPolygonLibrary(target){
  const svg=target.querySelector('svg');let box=svg.getAttribute('viewBox').split(/\s+/).map(Number),moving=null;

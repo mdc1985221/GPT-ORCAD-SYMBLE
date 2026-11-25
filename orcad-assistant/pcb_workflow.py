@@ -88,6 +88,9 @@ def enrich_project(project):
 
 
 def inspect_pdf(path, pins):
+    from connector_profile import profile as connector_profile
+    connector=connector_profile(path)
+    if connector:return connector['pcb']
     from polygon_smd import profile as polygon_profile
     reviewed=polygon_profile(path)
     if reviewed:return reviewed['pcb']
@@ -394,7 +397,7 @@ def check(project):
     pads=fp.geometry(spec)
     fp.require_height(spec)
     ids=[p['id'] for p in project['pins']]
-    if len(set(ids))!=len(ids) or set(ids)!={p[0] for p in pads}:raise ValueError('符号脚号与 PCB 焊盘编号不完全一致')
+    if len(set(ids))!=len(ids) or set(ids)!=fp.electrical_ids(spec):raise ValueError('符号脚号与 PCB 焊盘编号不完全一致')
     if pcb.get('needs'):raise ValueError('请先处理 PCB 缺项：'+'；'.join(pcb['needs']))
     if not pcb.get('confirmed'):raise ValueError('请在 PCB 页核对尺寸、方向和工艺预设后确认')
     if project['footprint']!=spec['name']:raise ValueError('PCB 封装名称不一致，请保存 PCB 参数以同步名称')

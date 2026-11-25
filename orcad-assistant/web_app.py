@@ -13,6 +13,7 @@ import build_pipeline
 import pcb_workflow
 import footprint_pipeline
 import library_manager
+import history_catalog
 import model3d_pipeline
 from urllib.parse import urlsplit, parse_qs, quote
 
@@ -31,6 +32,9 @@ class Workspace:
         self.reference = None
         self.lock = threading.RLock()
         self.library = library_manager.Library(STATE/'library',STATE/'output')
+        history_roots=[('当前工作区',STATE/'output'),('历史验证样例',BASE.parent/'review')]
+        history_roots += [('旧 EXE · '+p.name,p/'workspace/output') for p in (BASE.parent/'EXE').glob('*') if p.is_dir()]
+        self.history_catalog=history_catalog.HistoryCatalog(history_roots)
 
     def save(self):
         core.atomic_json(STATE / 'last-session.json', self.project)
@@ -226,7 +230,8 @@ class Workspace:
                     spec = data['spec']
                     footprint_pipeline.geometry(spec)
                     pcb = candidate.setdefault('pcb',{})
-                    pcb.update(spec=spec,confirmed=bool(data.get('confirmed')),needs=[])
+                    if spec.get('family')=='connector' and data.get('confirmed') and not (spec.get('orientation_confirmed') and spec.get('process_accepted')):raise ValueError('连接器需确认脚号方向与工艺边界')
+                    pcb.update(spec=spec,confirmed=bool(data.get('confirmed')),needs=[] if data.get('confirmed') else list(spec.get('unresolved',[])))
                     candidate['footprint'] = spec['name']
                     candidate.pop('model3d',None)
                 elif action=='metadata':
@@ -332,7 +337,7 @@ def serve(port=8765, open_browser=True):
                 self.send_header('Cache-Control','no-store')
                 self.end_headers()
                 self.wfile.write(raw)
-            elif url.path in ('/library.js','/library.css','/model3d.js'):
+            elif url.path in ('/library.js','/library.css','/model3d.js','/history.js'):
                 raw=(BASE/'web'/url.path[1:]).read_bytes()
                 self.send_response(200)
                 self.send_header('Content-Type','text/javascript; charset=utf-8' if url.path.endswith('.js') else 'text/css; charset=utf-8')
@@ -340,6 +345,16 @@ def serve(port=8765, open_browser=True):
             elif url.path.startswith('/api/library') and self.headers.get('X-Workspace-Token')==token:
                 try:
                     with workspace.lock:
+                        if url.path=='/api/library/history':
+                            self.reply(workspace.history_catalog.list(query.get('refresh',['0'])[0]=='1'));return
+                        if url.path=='/api/library/history/item':
+                            self.reply(workspace.history_catalog.detail(query.get('id',[''])[0]));return
+                        if url.path=='/api/library/history/mesh':
+                            self.reply(workspace.history_catalog.mesh(query.get('id',[''])[0]));return
+                        if url.path=='/api/library/history/download':
+                            raw=workspace.history_catalog.download(query.get('id',[''])[0],query.get('source',['0'])[0]=='1')
+                            self.send_response(200);self.send_header('Content-Type','application/zip')
+                            self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw);return
                         if url.path=='/api/library':
                             self.reply(dict(items=workspace.library.list(),categories=library_manager.CATEGORIES,
                                 scan=getattr(workspace,'library_scan',None)));return

@@ -17,11 +17,13 @@ CATEGORIES=[dict(id=k,label=v) for k,v in (
     ('resistor','电阻'),('capacitor','电容'),('inductor','电感'),('diode','二极管'),
     ('transistor','晶体管'),('ic-power','IC / 电源'),('ic-memory','IC / 存储器'),
     ('ic-interface','IC / 接口'),('ic-sensor','IC / 传感器'),('ic-other','IC / 其他'),
-    ('connector','连接器'),('crystal','晶振'),('other','其他'))]
+    ('connector','连接器'),('connector-dip','连接器 / DIP（单排、双排通孔）'),('crystal','晶振'),('other','其他'))]
 
 
 def suggest_category(project):
     text=' '.join(str(project.get(k,'')) for k in ('device','description','footprint')).upper()
+    rule=project.get('connector_rule') or {}
+    if rule.get('mounting')=='PTH' and rule.get('rows') in (1,2):return 'connector-dip'
     if re.search(r'\b(?:GC\d+|SC\d{4}|IMX\d+|OV\d+)|SENSOR|传感',text):return 'ic-sensor'
     if re.search(r'RESISTOR|电阻',text):return 'resistor'
     if re.search(r'CAPACITOR|电容',text):return 'capacitor'
@@ -121,7 +123,7 @@ class Library:
                 found=[p for p in adir.iterdir() if p.name.lower()==name.lower()]
                 if len(found)!=1:raise ValueError('缺少已验证库文件：'+name)
                 files[str(Path(relative).parent.as_posix())+'/'+found[0].name]=self._source(found[0])
-            if set(p[0] for _,_,ps in sections for p in ps)!={p[0] for p in fp.geometry(spec)}:
+            if set(p[0] for _,_,ps in sections for p in ps)!=fp.electrical_ids(spec):
                 raise ValueError('原理图与 PCB 脚号不一致')
         payload={n:p.read_bytes() for n,p in files.items()}
         if any(not b for b in payload.values()):raise ValueError('库文件为空，请重新生成')

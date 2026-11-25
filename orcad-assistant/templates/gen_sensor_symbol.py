@@ -155,7 +155,7 @@ def build(config, output_dir='.', dry_run=False):
         else:
             NAME[ball] = base
 
-    TYPE_INT = {'PWR': 7, 'GND': 7, 'NC': 7, 'IN': 0, 'OUT': 2, 'IO': 3, 'ANA': 3}
+    TYPE_INT = {'PWR': 7, 'GND': 7, 'NC': 7, 'IN': 0, 'OUT': 2, 'IO': 3, 'ANA': 3, 'PASS': 1}
     if len(set(NAME.values())) != len(NAME):
         raise ValueError('添加后缀后名称仍有冲突，请修改重复名称')
     if PITCH < 10 or PITCH % 10 or any(v <= 0 or v % 10 for v in (W, H)):

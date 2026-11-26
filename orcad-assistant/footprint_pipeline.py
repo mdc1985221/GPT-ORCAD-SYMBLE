@@ -15,6 +15,9 @@ TEMPLATES=BASE/'templates'/'footprint'
 
 
 def presentation(spec):
+    if spec.get('kind')=='pth_connector':
+        from connector_profile import pth_presentation
+        return pth_presentation(spec)
     if spec.get('kind')=='polygon_smd':
         import polygon_smd
         return dict(kind='polygon_smd',svg=polygon_smd.svg(spec))
@@ -154,6 +157,9 @@ def verify_drawing(spec, directory, require_paths=True):
 
 
 def geometry(spec):
+    if spec.get('kind')=='pth_connector':
+        from connector_profile import pth_geometry
+        return pth_geometry(spec)
     if spec.get('kind')=='polygon_smd':
         import polygon_smd
         return polygon_smd.validate(spec)

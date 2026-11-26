@@ -73,7 +73,7 @@ class Workspace:
             return dict(layout_template=core.layout_rule(self.project),pcb_preview=pcb_preview, pcb_presentation=style, project=self.project, issues=pending, sections=sections,
                         library_categories=library_manager.CATEGORIES, library_suggestion=library_manager.suggest_category(self.project),
                         job=self.job, reference=self.reference, preview_error=error, environment=self.env,
-                        model3d_available=self.model3d_available(),model3d_item=getattr(self,'last_model3d_item',None))
+                        model3d_available=self.model3d_available(),model3d_item=getattr(self,'last_model3d_item',None),imported_library_item=getattr(self,'imported_library_item',None))
 
     def model3d_available(self):
         try:model3d_pipeline.runtime();return True
@@ -227,6 +227,11 @@ class Workspace:
                 self.save()
             elif action=='library-scan':
                 self.library_scan=self.library.scan_history()
+            elif action=='library-import-history':
+                record=self.history_catalog.get(data['id'])
+                item=self.library.import_history(record)
+                self.datasheets.capture(self.library.project(item['id']))
+                self.imported_library_item=item['id']
             else:
                 candidate = copy.deepcopy(self.project)
                 if action=='new':
@@ -392,7 +397,7 @@ def serve(port=8765, open_browser=True):
                         raw=workspace.library.design_bytes(item_id,query.get('source',['0'])[0]=='1')
                     self.send_response(200);self.send_header('Content-Type','application/zip')
                     self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
-                except (ValueError,OSError,KeyError) as exc:self.reply({'error':str(exc)},400)
+                except (ValueError,OSError,KeyError,TypeError) as exc:self.reply({'error':str(exc)},400)
             elif url.path in ('/api/model3d/download','/api/model3d/mesh') and self.headers.get('X-Workspace-Token')==token:
                 try:
                     with workspace.lock:

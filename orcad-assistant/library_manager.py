@@ -65,6 +65,8 @@ class Library:
         item=json.loads((folder/'_internal/item.json').read_text(encoding='utf8'))
         item['paths']={key:str(folder/relative) if (folder/relative).is_dir() else None
             for key,relative in [('capture','symbol'),('psmpath','pcb/psm'),('padpath','pcb/pad'),('model3d','3d')]}
+        snapshot=json.loads((folder/'_internal/project.json').read_text(encoding='utf8'))
+        item['manufacturer']=snapshot.get('manufacturer','')
         item['category_label']=next(c['label'] for c in CATEGORIES if c['id']==item['category'])
         return item
 
@@ -76,6 +78,67 @@ class Library:
         return sorted(result,key=lambda i:i['created'],reverse=True)
 
     def get(self, item_id):return self._read(self._folder(item_id))
+
+    def import_history(self, record):
+        """Copy a selected history record into persistent storage, without promoting QA."""
+        source=Path(record['source_path']).resolve()
+        snapshot=core.new_project();snapshot.update(copy.deepcopy(record['_project']))
+        snapshot.pop('generated',None)
+        snapshot.update(device=record['device'],footprint=record['footprint'],library_category=record['category'])
+        spec=record.get('_spec')
+        if spec:
+            fp.geometry(spec)
+            snapshot['pcb']=dict(spec=copy.deepcopy(spec),confirmed=False,needs=['历史收录；工艺、脚号映射及目标工程仍需验收'])
+            if spec.get('source_pdf') and not snapshot.get('sources'):
+                snapshot['sources']=[dict(path=spec['source_pdf'],sha256=spec.get('source_sha256',spec.get('source_pdf_sha256','')))]
+        files={};source_reports={}
+        for relative,path in record['_files'].items():
+            rel=Path(relative);file=Path(path).resolve()
+            if rel.is_absolute() or '..' in rel.parts or not file.is_relative_to(source) or not file.is_file() or file.suffix.lower() not in ('.olb','.psm','.pad','.ssm','.dra','.step'):raise ValueError('历史库文件路径无效')
+            raw=file.read_bytes()
+            if not raw:raise ValueError('历史库文件为空')
+            for report_path in (file.parent/'verification.json',file.parent.parent/'verification.json'):
+                if report_path.is_file() and report_path.resolve().is_relative_to(source):
+                    original=json.loads(report_path.read_text(encoding='utf8'))
+                    source_reports[report_path.relative_to(source).as_posix()]=original
+                    expected=original.get('file_hashes',{}).get(file.name)
+                    if expected and hashlib.sha256(raw).hexdigest()!=expected:raise ValueError('历史文件与原验证记录不符：'+file.name)
+            files[rel.as_posix()]=raw
+        if not any(n.lower().endswith('.olb') for n in files):raise ValueError('需有原理符号，才能收录到器件库')
+        model=None;mesh=None
+        if record.get('_mesh'):
+            mesh_path=Path(record['_mesh']).resolve()
+            if not mesh_path.is_relative_to(source):raise ValueError('历史模型预览路径无效')
+            mesh=mesh_path.read_bytes();json.loads(mesh)
+            for filename in ('model3d.json','verification.json'):
+                report_path=mesh_path.parent/filename
+                if report_path.is_file():
+                    model=json.loads(report_path.read_text(encoding='utf8'));break
+            if not model:raise ValueError('缺少历史3D验证记录')
+            for name,digest in model.get('file_hashes',{}).items():
+                file=(mesh_path.parent/name).resolve()
+                if not file.is_relative_to(mesh_path.parent) or hashlib.sha256(file.read_bytes()).hexdigest()!=digest:raise ValueError('历史3D文件在验证后发生变化')
+            model=copy.deepcopy(model);model.setdefault('file_hashes',{})['mesh.json']=hashlib.sha256(mesh).hexdigest()
+        digest=hashlib.sha256(json.dumps(snapshot,ensure_ascii=False,sort_keys=True).encode())
+        for name,raw in sorted(files.items()):digest.update(name.encode()+b'\0'+raw)
+        ident=digest.hexdigest()[:24]
+        if any(i['id']==ident for i in self.list()):return self.get(ident)
+        category=self._category(record['category']);folder=self.root/category/ident;stage=self.root/('.staging-'+uuid.uuid4().hex)
+        try:
+            for name,raw in files.items():
+                file=stage/name;file.parent.mkdir(parents=True,exist_ok=True);file.write_bytes(raw)
+            internal=stage/'_internal';internal.mkdir(exist_ok=True)
+            if mesh is not None:
+                (internal/'mesh.json').write_bytes(mesh);core.atomic_json(internal/'model3d.json',model)
+            core.atomic_json(internal/'project.json',snapshot)
+            core.atomic_json(internal/'verification.json',dict(status='HISTORY_IMPORTED',source_path=str(source),notice='Persistent copy; original validation scope retained, target design acceptance not implied'))
+            core.atomic_json(internal/'source-verification.json',source_reports)
+            info=dict(id=ident,device=snapshot['device'],footprint=snapshot['footprint'],manufacturer=snapshot.get('manufacturer',''),category=category,pins=len(snapshot['pins']),parts=len(snapshot.get('parts',{'A':''})),pcb=any(n.lower().endswith('.psm') for n in files),model3d_status='generated' if mesh is not None and any(n.lower().endswith('.step') for n in files) else 'pending',status='HISTORY_IMPORTED',created=datetime.now(timezone.utc).isoformat(),files=[dict(path=n,sha256=hashlib.sha256(raw).hexdigest(),bytes=len(raw)) for n,raw in sorted(files.items())])
+            core.atomic_json(internal/'item.json',info)
+            folder.parent.mkdir(parents=True,exist_ok=True);stage.rename(folder)
+        finally:
+            if stage.exists():shutil.rmtree(stage)
+        return self.get(ident)
 
     def add(self, project, generated, category=None):
         if (generated.get('report') or {}).get('status')!='PASS':raise ValueError('只有验证通过的结果可以入库')

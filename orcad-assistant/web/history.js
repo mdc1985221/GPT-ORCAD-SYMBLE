@@ -2,7 +2,7 @@
 let historyData=null,historyTerm='',historyCategory='',historyKind='',historySource='',historySelected=null,historyRequest=0,historyVersions='all';
 const verifiedLibraryPage=libraryPage;
 libraryPage=async function(){document.body.dataset.catalog='library';await verifiedLibraryPage();document.querySelector('.catalog-bar .spacer')?.insertAdjacentHTML('afterend','<button onclick="historyPage()">历史封装检索</button>')};
-async function historyPage(refresh=false){
+async function historyPage(refresh=false){++libraryFetch;++libraryListFetch;
  document.body.dataset.catalog='history';document.body.classList.add('library-mode');location.hash='history';$('nav-library').classList.add('active');$('nav-editor').classList.remove('active');
  $('catalog').innerHTML=`<div class="catalog-bar"><h1>历史封装检索</h1><p>查找以前生成的器件 · 保留原文件 · 不自动入库</p><span class="spacer"></span><button onclick="libraryPage()">已入库器件</button><button onclick="historyPage(true)">刷新历史索引</button><button onclick="editorPage()">返回编辑</button></div><div class="catalog-toolbar"><span>检索范围：当前工作区、旧 EXE 输出、历史验证样例</span><span class="catalog-muted">G盘公司原库不在自动扫描范围内。</span></div><div class="catalog-grid"><aside class="catalog-categories" id="history-categories"></aside><section class="catalog-items"><input class="catalog-search" id="history-search" placeholder="型号 / 封装 / 分类 / PIN数，多词检索" value="${esc(historyTerm)}"><div class="history-filters"><select id="history-versions" aria-label="显示版本"><option value="latest">每个器件最新版本</option><option value="all">全部历史版本</option></select><select id="history-kind" aria-label="文件类型"><option value="">全部文件</option><option value="symbol">有原理符号</option><option value="pcb">有PCB封装</option><option value="3d">有3D文件</option></select><select id="history-source" aria-label="记录来源"><option value="">全部来源</option></select><button id="history-clear" class="quiet">清空筛选</button></div><div class="catalog-muted" id="history-count">正在检索历史文件…</div><div id="history-list"></div></section><section class="catalog-detail" id="library-detail"><div class="catalog-empty">选择历史器件，查看预览及原文件路径。</div></section></div>`;
  const request=++historyRequest;
@@ -32,8 +32,8 @@ function renderHistoryList(){
  $('history-list').querySelectorAll('[data-history-id]').forEach(b=>b.onclick=()=>selectHistory(b.dataset.historyId));
 }
 async function selectHistory(id){
- const request=++libraryFetch;historySelected=id;renderHistoryList();
- try{const i=await api('/api/library/history/item?id='+encodeURIComponent(id));if(request!==libraryFetch||!$('history-list'))return;libraryDetail=i;libraryPart=i.sections[0]?.part||'A';if(!i.sections.length&&libraryPreview==='symbol')libraryPreview=i.pcb?'pcb':i.model3d_status==='generated'?'3d':'symbol';renderHistoryDetail()}catch(e){toast(e.message)}
+ const request=++libraryFetch;historySelected=id;libraryDetail=null;$('library-preview')?._disposeModel?.();renderHistoryList();$('library-detail').innerHTML='<div class="catalog-empty">正在加载所选历史版本…</div>';
+ try{const i=await api('/api/library/history/item?id='+encodeURIComponent(id));if(request!==libraryFetch||!$('history-list'))return;libraryDetail=i;libraryPart=i.sections[0]?.part||'A';if(!i.sections.length&&libraryPreview==='symbol')libraryPreview=i.pcb?'pcb':i.model3d_status==='generated'?'3d':'symbol';renderHistoryDetail()}catch(e){if(request!==libraryFetch||!$('history-list'))return;libraryDetail=null;$('library-detail').textContent='所选历史版本加载失败：'+e.message;toast(e.message)}
 }
 function renderHistoryDetail(){
  const i=libraryDetail;if(!i?.history)return;$('library-preview')?._disposeModel?.();
@@ -42,6 +42,7 @@ function renderHistoryDetail(){
  $('library-detail').querySelectorAll('[data-history-view]').forEach(b=>b.onclick=()=>{libraryPreview=b.dataset.historyView;renderHistoryDetail()});
  const expand=document.createElement('button');expand.textContent='放大预览';expand.onclick=toggleLibraryPreviewSize;$('library-detail').querySelector('.catalog-tabs').appendChild(expand);
  $('library-detail').querySelectorAll('[data-history-copy]').forEach(b=>b.onclick=()=>copyLibraryText(i.paths[b.dataset.historyCopy]));
+ const collect=document.createElement('button');collect.textContent='收录到器件库';collect.disabled=!i.symbol;collect.onclick=async()=>{collect.disabled=true;try{if(await act({action:'library-import-history',id:i.id})){librarySelected=state.imported_library_item;await libraryPage();toast('已复制到持久器件库，原验证范围保留')}}finally{collect.disabled=false}};$('history-download').after(collect);
  $('history-copy-pcb').onclick=()=>copyLibraryText(`psmpath: ${i.paths.psmpath}\npadpath: ${i.paths.padpath}`);
  $('history-copy-root').onclick=()=>copyLibraryText(i.source_path);
  $('history-download').onclick=()=>downloadCadence('/api/library/history/download?id='+encodeURIComponent(i.id)+'&source='+($('history-dra').checked?'1':'0'),i.device+'-history-review.zip');

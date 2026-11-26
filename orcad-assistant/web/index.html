@@ -62,10 +62,13 @@ function workflowNext(){
 }
 function usageGuide(){
  dialog(`<h2>从资料到可用器件库</h2><p>导入资料 → 核对少量疑点 → 预览调整 → 生成并验证 → 下载／收录。</p>
- <div class="usage-card"><strong>当前支持到哪里？</strong><p>原理符号支持引脚编辑、10 MIL 吸附、框选批量移动及多 PART。Web PCB 生成支持 CSP／BGA，以及已适配 TPS543620 RPY0014A 的异形 QFN；你确认的 0402 电阻仍是独立样板，尚未接入此生成入口。简化 STEP 适用于已配置尺寸的 CSP／BGA。</p></div>
+ <div class="usage-card"><strong>当前支持哪些器件？</strong><p>原理符号支持 10 MIL 吸附、单个／框选引脚移动和多 PART。CSP／BGA 支持已适配的图像传感器尺寸与 3D 细节；异形 QFN 已适配 TPS543620，贴片连接器已适配 SHOUHAN 12502-12P。</p><p>器件库还可预览、下载已核对的 MOSFET（AON7544 台舟版、NTMFS5C430NL）和 DIP 通孔双排排母 LAIL 2×20／2.54 mm 的原理、PCB、3D 三件套。它们是按匹配规格书核对的样例，不表示任意 MOSFET、单／双排连接器 PDF 都能全自动解析。0402 电阻目前仍是独立参考样板。</p></div>
+ <div class="usage-card"><strong>做过的器件怎样积累？</strong><p>生成验证后收录到器件库；历史样例可到“找封装”检索，在详情点击“收录到器件库”，复制 OLB、PCB、STEP 及模型预览到持久库。原文件保留，历史收录不会自动变成生产验收通过。</p><p>默认“优先完整版本（去重）”优先显示 OLB、PCB、3D 齐全的版本；旧版本在“全部版本”查看。程序更新保留本机 workspace 数据目录，备份或换电脑时请一并复制该目录。</p></div>
+ <div class="usage-card"><strong>规格书在哪里？</strong><p>器件详情向下滚动到“规格书”，可打开归档 PDF 或补充上传；按厂家和型号区分。已有来源可点“补齐已有规格书”，缺失的显示待补，不借用相似型号。</p></div>
+ <div class="usage-card"><strong>做好的器件怎样积累？</strong><p>“器件库”按分类长期保存库文件和规格书。默认优先显示原理符号、PCB、3D 齐全的最新版本，旧版本可在“全部版本”查看。DIP 排母在“连接器 / DIP”分类中，搜索 LAIL 或 2X20 即可。</p><p>以前只保存在验证目录的样例，可从“历史封装检索”选中，点击“收录到器件库”。文件会复制入库，原历史目录移动后仍可预览、下载。历史收录保留原验收范围，不代表自动通过目标工程验收。</p></div>
  <div class="usage-card"><strong>只需要原理符号</strong><p>在底部“生成内容”选择“仅符号 OLB”，无需填写 CSP／BGA 参数。原生生成需先设置本机 Cadence 环境。</p></div>
  <div class="usage-card"><strong>尺寸从哪里来？</strong><p>优先核对对应型号规格书的推荐焊盘；机械尺寸、铜、阻焊和锡膏分别处理。默认工艺值是参考值。英制 0402 通常对应公制 1005（本体约 1.0 × 0.5 mm），不能与公制 0402 混用，也不能等比放大为其他尺寸。</p></div>
- <div class="usage-card"><strong>下载后怎么用？</strong><p>Capture 添加 OLB。Allegro 的 psmpath 指向 PSM 文件夹，padpath 指向 PAD 文件夹。器件库详情可复制这些路径；可编辑源文件 DRA 按需下载。STEP 用于三维核对，尚需在 Allegro 中关联。</p></div>
+ <div class="usage-card"><strong>下载后怎么用？</strong><p>Capture 添加 OLB。Allegro 的 psmpath 指向 PSM 文件夹，padpath 指向 PAD 文件夹。器件库详情可复制这些路径；异形焊盘的 SSM 与 PSM 一起保留；可编辑源文件 DRA 按需下载。STEP 用于三维核对，尚需在 Allegro 中关联。</p></div>
  <details><summary>本轮参考资料与采用边界</summary><p><a href="https://klc.kicad.org/" target="_blank" rel="noopener noreferrer">KiCad 官方库规范</a>：借鉴按功能分类、规格书优先和自动检查。其网格、图层和数值约定不直接替代 Cadence 规则。<br><a href="https://www.vishay.com/docs/60119/landpatterns.pdf" target="_blank" rel="noopener noreferrer">Vishay 60119 焊盘参考</a>：适用于文中列出的薄膜电阻系列，不能当作所有 0402 的统一模板。</p></details>
  <div class="actions"><button onclick="closeDialog();environmentDialog()">本机环境</button><button class="primary" onclick="closeDialog()">知道了</button></div>`);
  $('dialog').classList.add('usage-dialog');

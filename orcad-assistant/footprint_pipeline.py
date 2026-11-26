@@ -422,7 +422,9 @@ def build(spec, output, progress, executable='D:/tools/pcb/bin/allegro.exe'):
         progress('PCB：'+('生成 DRA / PSM / PAD' if script=='build.scr' else
                          '验证磁盘焊盘与 PCB 导入：'+directory.name if script=='validate.scr' else '独立打开 DRA 逐脚回读'))
         with (directory/(script+'.log')).open('wb') as log:
-            process = subprocess.Popen([executable, '-s', script, '-nograph'], cwd=directory,
+            # Select the basic PCB tier explicitly; otherwise each isolated
+            # build/readback may wait at Allegro Product Choices.
+            process = subprocess.Popen([executable, '-pcb', '-s', script, '-nograph'], cwd=directory,
                                        stdout=log, stderr=subprocess.STDOUT, creationflags=flags)
             deadline = time.monotonic()+120
             while time.monotonic()<deadline:

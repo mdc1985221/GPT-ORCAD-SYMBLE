@@ -7,13 +7,15 @@ BASE=Path(__file__).parent
 def pt(v):return '(list '+ ' '.join(f'{n:.5f}' for n in v)+')'
 def points(v):return '(list '+' '.join(pt(q) for q in v+[v[0]])+')'
 
-def run(folder,stem,code,executable):
+def run(folder,stem,code,executable,tier='pcb'):
     folder=Path(folder);marker=folder/(stem+'-complete.txt');marker.unlink(missing_ok=True)
     (folder/(stem+'.il')).write_text(code,encoding='ascii')
     script='\n'.join(['scriptmode +invisible +noinfo','skill \'(axlSetVariable "NOCONFIRM" t)\'',f'skill \'(load "{stem}.il")\'',f'skill \'(let ((o (outfile "{marker.name}"))) (fprintf o "DONE") (close o))\'','exit',''])
     (folder/(stem+'.scr')).write_text(script,encoding='ascii')
     with (folder/(stem+'.log')).open('wb') as log:
-        p=subprocess.Popen([executable,'-s',stem+'.scr','-nograph'],cwd=folder,stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        if tier not in (None,'pcb','designer','expert','gxl'):raise ValueError('Unsupported Allegro tier')
+        args=[executable]+(['-'+tier] if tier else [])+['-s',stem+'.scr','-nograph']
+        p=subprocess.Popen(args,cwd=folder,stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         try:
             deadline=time.monotonic()+600
             while p.poll() is None and not marker.is_file() and time.monotonic()<deadline:time.sleep(.4)

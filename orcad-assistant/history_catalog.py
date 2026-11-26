@@ -95,7 +95,7 @@ class HistoryCatalog:
 
     def detail(self,ident):
         record=self.get(ident);item={k:v for k,v in record.items() if not k.startswith('_')}
-        item.update(sections=[],pcb_spec=record['_spec'],pads=[],presentation=None,preview_notice='历史参数预览；保留原文件，尚未重新验收。')
+        item.update(sections=[],symbol_graphics=record['_project'].get('symbol_graphics'),pcb_spec=record['_spec'],pads=[],presentation=None,preview_notice='历史参数预览；保留原文件，尚未重新验收。')
         try:
             if record['_project'].get('pins'):
                 p=core.new_project();p.update(record['_project'])

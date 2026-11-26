@@ -209,6 +209,9 @@ class Library:
 
     def detail(self, item_id):
         item=self.get(item_id);p=self.project(item_id)
+        item['symbol_graphics']=p.get('symbol_graphics')
+        item['manufacturer']=p.get('manufacturer','')
+        item['review_notes']=(p.get('pcb') or {}).get('needs',[])
         item['sections']=[dict(part=part,width=cfg['W'],height=cfg['H'],pins=pins)
             for part,cfg,pins in core.section_layouts(p,core.DEFAULT_ENV)]
         spec=(p.get('pcb') or {}).get('spec')

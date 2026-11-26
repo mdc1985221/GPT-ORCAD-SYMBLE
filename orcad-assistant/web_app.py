@@ -14,6 +14,7 @@ import pcb_workflow
 import footprint_pipeline
 import library_manager
 import history_catalog
+import datasheet_archive
 import model3d_pipeline
 from urllib.parse import urlsplit, parse_qs, quote
 
@@ -35,8 +36,10 @@ class Workspace:
         history_roots=[('当前工作区',STATE/'output'),('历史验证样例',BASE.parent/'review')]
         history_roots += [('旧 EXE · '+p.name,p/'workspace/output') for p in (BASE.parent/'EXE').glob('*') if p.is_dir()]
         self.history_catalog=history_catalog.HistoryCatalog(history_roots)
+        self.datasheets=datasheet_archive.Archive(STATE/'datasheets')
 
     def save(self):
+        self.datasheets.capture(self.project)
         core.atomic_json(STATE / 'last-session.json', self.project)
 
     def snapshot(self):
@@ -98,6 +101,16 @@ class Workspace:
             action = data['action']
             if self.job['busy']:
                 raise ValueError('当前任务正在处理，请稍候')
+            if action=='datasheet-attach':
+                if data.get('history'):
+                    project=self.history_catalog.get(data['id'])
+                elif data.get('id'):project=self.library.project(data['id'])
+                else:project=self.project
+                self.datasheets.attach(project,base64.b64decode(data['content'],validate=True),data['name'])
+                return self.view()
+            if action=='datasheet-backfill':
+                self.datasheet_backfill=self.datasheets.backfill(self.library,self.history_catalog)
+                return self.view()
             if action in ('import', 'reference'):
                 suffix = Path(data['name']).suffix.lower()
                 allowed = ('.png','.jpg','.jpeg','.bmp','.webp') if action=='reference' else ('.pdf','.csv','.json')
@@ -337,7 +350,7 @@ def serve(port=8765, open_browser=True):
                 self.send_header('Cache-Control','no-store')
                 self.end_headers()
                 self.wfile.write(raw)
-            elif url.path in ('/library.js','/library.css','/model3d.js','/history.js'):
+            elif url.path in ('/library.js','/library.css','/model3d.js','/history.js','/datasheets.js'):
                 raw=(BASE/'web'/url.path[1:]).read_bytes()
                 self.send_response(200)
                 self.send_header('Content-Type','text/javascript; charset=utf-8' if url.path.endswith('.js') else 'text/css; charset=utf-8')
@@ -346,7 +359,19 @@ def serve(port=8765, open_browser=True):
                 try:
                     with workspace.lock:
                         if url.path=='/api/library/history':
-                            self.reply(workspace.history_catalog.list(query.get('refresh',['0'])[0]=='1'));return
+                            payload=workspace.history_catalog.list(query.get('refresh',['0'])[0]=='1')
+                            for i in payload['items']:i['datasheets']=workspace.datasheets.list(workspace.history_catalog.get(i['id']))
+                            self.reply(payload);return
+                        if url.path=='/api/library/datasheet':
+                            raw=workspace.datasheets.pdf(query.get('sha',[''])[0])
+                            self.send_response(200);self.send_header('Content-Type','application/pdf')
+                            self.send_header('Content-Disposition','inline; filename="datasheet.pdf"')
+                            self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw);return
+                        if url.path=='/api/library/datasheets':
+                            ident=query.get('id',[''])[0]
+                            if query.get('history',['0'])[0]=='1':project=workspace.history_catalog.get(ident)
+                            else:project=workspace.library.project(ident) if ident else workspace.project
+                            self.reply(dict(items=workspace.datasheets.list(project)));return
                         if url.path=='/api/library/history/item':
                             self.reply(workspace.history_catalog.detail(query.get('id',[''])[0]));return
                         if url.path=='/api/library/history/mesh':
@@ -356,7 +381,9 @@ def serve(port=8765, open_browser=True):
                             self.send_response(200);self.send_header('Content-Type','application/zip')
                             self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw);return
                         if url.path=='/api/library':
-                            self.reply(dict(items=workspace.library.list(),categories=library_manager.CATEGORIES,
+                            items=workspace.library.list()
+                            for i in items:i['datasheets']=workspace.datasheets.list(workspace.library.project(i['id']))
+                            self.reply(dict(items=items,categories=library_manager.CATEGORIES,
                                 scan=getattr(workspace,'library_scan',None)));return
                         item_id=query.get('id',[''])[0]
                         if url.path=='/api/library/item':self.reply(workspace.library.detail(item_id));return

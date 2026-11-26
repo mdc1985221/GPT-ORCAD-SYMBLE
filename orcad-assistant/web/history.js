@@ -1,5 +1,5 @@
 /* Read-only discovery; historical files never acquire verified-library status. */
-let historyData=null,historyTerm='',historyCategory='',historyKind='',historySource='',historySelected=null,historyRequest=0,historyVersions='latest';
+let historyData=null,historyTerm='',historyCategory='',historyKind='',historySource='',historySelected=null,historyRequest=0,historyVersions='all';
 const verifiedLibraryPage=libraryPage;
 libraryPage=async function(){document.body.dataset.catalog='library';await verifiedLibraryPage();document.querySelector('.catalog-bar .spacer')?.insertAdjacentHTML('afterend','<button onclick="historyPage()">历史封装检索</button>')};
 async function historyPage(refresh=false){
@@ -28,7 +28,7 @@ function renderHistoryList(){
  $('history-count').textContent=historyVersions==='all'?`找到 ${items.length} 个版本 · 共 ${historyData.items.length} 条记录`:`显示 ${items.length} 个器件 · 匹配 ${matches.length} 个版本`;
  if(!historySelected)$('library-detail').innerHTML='<div class="catalog-empty">'+(items.length?'点击器件查看预览，或按 Enter 打开第一项。':'没有匹配结果，试试清空筛选。')+'</div>';
  const visible=items.some(i=>i.id===historySelected);if(!visible&&historySelected){++libraryFetch;historySelected=null;libraryDetail=null;$('library-preview')?._disposeModel?.();$('library-detail').innerHTML='<div class="catalog-empty">'+(items.length?'点击器件查看预览，或按 Enter 打开第一项。':'没有匹配结果，试试清空筛选。')+'</div>'}
- $('history-list').innerHTML=items.map(i=>`<article class="catalog-card ${historySelected===i.id?'selected':''}" data-history-id="${i.id}"><h3>${esc(i.device)}</h3><p>${esc(i.footprint)} · ${i.pins||'—'} PIN</p><div class="catalog-tags">${i.symbol?'<span class="catalog-tag">OLB 文件</span>':''}${i.pcb?'<span class="catalog-tag">PCB 文件</span>':''}${i.model3d_status!=='pending'?'<span class="catalog-tag">3D 文件</span>':''}<span class="catalog-tag pending">历史待复核</span></div><div class="catalog-muted">${esc(i.category_label)} · ${esc(i.source)} · ${new Date(i.created).toLocaleDateString()} · ${i.id.slice(0,6)}</div></article>`).join('')||'<div class="catalog-empty">没有匹配的历史封装，请更换关键词或筛选条件。</div>';
+ $('history-list').innerHTML=items.map(i=>`<article class="catalog-card ${historySelected===i.id?'selected':''}" data-history-id="${i.id}"><h3>${esc(i.device)}</h3><p>${esc(i.footprint)} · ${i.pins||'—'} PIN</p><div class="catalog-tags">${i.datasheets?.some(d=>d.available)?'<span class="catalog-tag">规格书 ✓</span>':'<span class="catalog-tag pending">待补规格书</span>'}${i.symbol?'<span class="catalog-tag">OLB 文件</span>':''}${i.pcb?'<span class="catalog-tag">PCB 文件</span>':''}${i.model3d_status!=='pending'?'<span class="catalog-tag">3D 文件</span>':''}<span class="catalog-tag pending">历史待复核</span></div><div class="catalog-muted">${esc(i.category_label)} · ${esc(i.source)} · ${new Date(i.created).toLocaleDateString()} · ${i.id.slice(0,6)}</div></article>`).join('')||'<div class="catalog-empty">没有匹配的历史封装，请更换关键词或筛选条件。</div>';
  $('history-list').querySelectorAll('[data-history-id]').forEach(b=>b.onclick=()=>selectHistory(b.dataset.historyId));
 }
 async function selectHistory(id){

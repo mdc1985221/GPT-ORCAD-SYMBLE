@@ -1,5 +1,6 @@
 .history-filters{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}.history-filters select{max-width:100%;border:1px solid #e0e5ef;border-radius:6px;padding:7px;color:#52637c;background:white}.history-notice{background:#fff4d9;color:#826122;padding:10px;border-radius:8px;font-size:12px;line-height:1.8}
 .catalog-preview.expanded-preview{position:fixed!important;inset:5vh 5vw;width:90vw;height:90vh;z-index:1000;border:1px solid #b7c5dc;box-shadow:0 0 0 100vmax #1c2c4399,0 12px 60px #17294344;background:#f7f9fc}.preview-close{position:absolute;right:12px;bottom:12px;z-index:5;background:white;border:1px solid #ccd7e8;border-radius:7px;padding:8px 14px}
+.datasheet-section{border-top:1px solid #e4eaf2;margin-top:18px;padding-top:10px}.datasheet-section h3{font-size:14px}.datasheet-file{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;font-size:12px;overflow-wrap:anywhere}.datasheet-file small{display:block;font-size:11px;color:#8490a4;margin-top:4px}.datasheet-file button{flex-shrink:0}
 .catalog{display:none;flex:1;min-height:0;flex-direction:column;padding-bottom:16px;gap:14px}
 body.library-mode .main>.parameters,body.library-mode .main>.workspace,body.library-mode .main>.footer{display:none}
 body.library-mode .catalog{display:flex}.catalog-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}

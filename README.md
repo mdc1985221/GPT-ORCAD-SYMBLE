@@ -188,3 +188,24 @@ python -m unittest discover -s tests
 106项单元测试及隔离浏览器操作/失败恢复检查通过。生成尺寸和10MIL规则未改变，旧EXE未重新打包。
 
 [本轮优化小结、已修正项与后续优先级](易用性优化小结-2026-11-26.md)。
+
+<!-- application-screenshots-20261126 -->
+## 软件界面预览
+
+以下为2026-11-26 Python/Web界面实拍；本地历史记录数量随电脑已有文件变化。截图展示操作界面，不代表图中器件已完成生产验收。
+
+### 简洁首页
+
+![导入资料、试用示例和查找已有封装](docs/screenshots/home.png)
+
+### 原理符号编辑
+
+![引脚清单、默认布局与10MIL网格编辑](docs/screenshots/symbol-editor.png)
+
+### 历史检索与3D预览
+
+![按型号筛选历史器件、旋转3D和下载库文件](docs/screenshots/library-3d.png)
+
+### 小窗口布局
+
+![1024像素窗口下的分类与历史封装检索](docs/screenshots/compact-library.png)

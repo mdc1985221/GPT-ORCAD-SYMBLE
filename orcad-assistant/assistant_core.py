@@ -553,8 +553,9 @@ def config(project, env):
                 layout_style='grouped', MASTER={p['id']: (
                     manual.get('names',{}).get(p['id'],{}).get('resolved',p['name'])
                     if manual.get('names',{}).get(p['id'],{}).get('base')==p['name'] else p['name'],p['type']) for p in project['pins']},
-                W=width, H=height, Y0=margin_y, PITCH=pitch, GAP=1,
-                REF_POS=(width // 2, height // 2 - 20), VAL_POS=(width // 2, height // 2 + 20),
+                W=width, H=height, Y0=margin_y, PITCH=pitch, GAP=1,PIN_LENGTH=project.get('symbol_pin_length',30),
+                REF_POS=(width // 2, -40 if project.get('symbol_graphics') else height // 2 - 20),
+                VAL_POS=(width // 2, -20 if project.get('symbol_graphics') else height // 2 + 20),
                 DROP_BALLS=set(), DROP_NC=False,
                 MANUAL_PINS={p['id']:manual['pins'][p['id']] for p in project['pins']} if manual else {}, **groups)
 
@@ -666,20 +667,24 @@ def edit_symbol_geometry(project, env, data):
     section_layouts(project,env)
 
 
-def export_svg(cfg, pins, path):
+def export_svg(cfg, pins, path, graphics=None):
     from html import escape
     w, h = cfg['W'], cfg['H']
     lines = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -100 {w+200} {h+200}">',
              '<rect x="-100" y="-100" width="100%" height="100%" fill="#f8fafc"/>',
-             f'<rect width="{w}" height="{h}" fill="white" stroke="#344862"/>']
+             '' if graphics else f'<rect width="{w}" height="{h}" fill="white" stroke="#344862"/>']
+    if graphics:
+        lines.extend(f'<line x1="{x}" y1="{y}" x2="{a}" y2="{b}" stroke="#344862" stroke-width="1.5"/>' for x,y,a,b in graphics['segments'])
+        lines.extend(f'<text data-package-size="true" x="{t["x"]}" y="{t["y"]}" dominant-baseline="central" text-anchor="middle" font-family="Arial,sans-serif" font-size="{t["height"]}" fill="#344862">{escape(str(t["text"]))}</text>' for t in graphics.get('texts',[]))
     for pid, name, typ, x, y, hx, hy in pins:
         lines.append(f'<line x1="{x}" y1="{y}" x2="{hx}" y2="{hy}" stroke="#2563eb"/>')
         rotate = -90 if x == hx else 0
         tx = x + 5 if x == 0 else x - 5 if x == w else x
         ty = y + 8 if y == 0 else y - 8 if y == h else y
         anchor = 'end' if x == w or y == 0 else 'start'
-        lines.append(f'<text x="{tx}" y="{ty}" font-family="sans-serif" font-size="6" text-anchor="{anchor}" transform="rotate({rotate},{tx},{ty})">{escape(name)}</text>')
+        if not graphics or graphics.get('pin_names_visible',True):
+            lines.append(f'<text x="{tx}" y="{ty}" font-family="sans-serif" font-size="6" text-anchor="{anchor}" transform="rotate({rotate},{tx},{ty})">{escape(name)}</text>')
         nx, ny = (x - 3, (y + hy) / 2) if x == hx else ((x + hx) / 2, y - 3)
         lines.append(f'<text x="{nx}" y="{ny}" text-anchor="middle" transform="rotate({rotate},{nx},{ny})" font-family="sans-serif" font-size="5" fill="#64748b">{escape(pid)}</text>')
-    lines.append(f'<text x="{w/2}" y="{h/2}" text-anchor="middle" font-family="sans-serif" font-size="12">{escape(cfg["device"])}</text></svg>')
+    lines.append(f'<text x="{w/2}" y="{-45 if graphics else h/2}" text-anchor="middle" font-family="sans-serif" font-size="12">{escape(cfg["device"])}</text></svg>')
     Path(path).write_text('\n'.join(lines), encoding='utf-8')

@@ -12,6 +12,9 @@ BASE=Path(__file__).resolve().parent
 
 
 def plan(spec, options):
+    if spec.get('family')=='standard_smd':
+        from standard_smd import plan as standard_plan
+        return standard_plan(spec,options)
     if spec.get('kind')=='polygon_smd':
         from polygon_model3d import plan as polygon_plan
         return polygon_plan(spec,options)

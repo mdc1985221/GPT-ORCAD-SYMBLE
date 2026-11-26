@@ -85,10 +85,12 @@ def svg(spec,layers=('copper','mask','paste'),numbers=True):
 def preview(spec,output):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
     title=html.escape(spec['name']);blocks=''.join(f'<section><h2>{label}</h2><div style="height:470px">{svg(spec,layers)}</div></section>' for label,layers in [('铜 / 阻焊 / 锡膏叠加',('copper','mask','paste')),('铜焊盘',('copper',)),('阻焊开口',('mask',)),('锡膏开口',('paste',))])
-    if spec.get('family')=='mosfet':
+    if spec.get('family') in ('mosfet','standard_smd'):
+        family_label='常用贴片' if spec.get('family')=='standard_smd' else 'MOSFET'
         notes=''.join(f'<li>{html.escape(str(n))}</li>' for n in spec.get('notes',[])+spec.get('needs',[]))
         path=output/(spec['name']+'_preview.html')
-        path.write_text(f'<!doctype html><meta charset="utf-8"><title>{title}</title><style>body{{font:15px Segoe UI,Microsoft YaHei,sans-serif;background:#f2f5fa;color:#24344c;margin:32px}}main{{max-width:1150px;margin:auto}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:20px}}section{{background:white;padding:18px;border-radius:14px}}li,p{{line-height:1.8}}</style><main><h1>{title} · MOSFET</h1><p>PCB 顶视 · mm · 蓝=铜，绿=阻焊开口，橙=锡膏。{len(spec["pads"])} 个电气焊盘；端子与 PCB 铜焊盘分别建模。目标设计及工艺尚待验收。</p><div class="grid">{blocks}</div><ul>{notes}</ul></main>',encoding='utf8')
+        family='常用贴片' if spec.get('family')=='standard_smd' else 'MOSFET'
+        path.write_text(f'<!doctype html><meta charset="utf-8"><title>{title}</title><style>body{{font:15px Segoe UI,Microsoft YaHei,sans-serif;background:#f2f5fa;color:#24344c;margin:32px}}main{{max-width:1150px;margin:auto}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:20px}}section{{background:white;padding:18px;border-radius:14px}}li,p{{line-height:1.8}}</style><main><h1>{title} · {family}</h1><p>PCB 顶视 · mm · 蓝=铜，绿=阻焊开口，橙=锡膏。{len(spec["pads"])} 个电气焊盘；端子与 PCB 铜焊盘分别建模。目标设计及工艺尚待验收。</p><div class="grid">{blocks}</div><ul>{notes}</ul></main>',encoding='utf8')
         return str(path)
     if spec.get('family')=='connector':
         electrical=sum(p.get('role','electrical')=='electrical' for p in spec['pads'])

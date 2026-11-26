@@ -121,6 +121,8 @@ def build(config, output_dir='.', dry_run=False):
     TOP, BOT, LEFT, RIGHT = D["TOP"], D["BOT"], D["LEFT"], D["RIGHT"]
     PITCH, GAP = D["PITCH"], D["GAP"]
     W, H, Y0 = D["W"], D["H"], D["Y0"]
+    PIN_LENGTH=D.get('PIN_LENGTH',30)
+    if PIN_LENGTH not in (10,20,30):raise ValueError('引脚长度须为10、20或30个绘图单位，并保持10MIL网格')
     GROUPED = (D.get("layout_style", "grouped") == "grouped")
 
     # --- 一致性自检：MASTER 与 四个分组必须完全覆盖、不重不漏 ---
@@ -171,7 +173,7 @@ def build(config, output_dir='.', dry_run=False):
         res = []; x = x_start
         for g in groups:
             for ball in g[1]:
-                res.append((ball, x, y_edge, x, y_edge + hot_dir * 30)); x += PITCH
+                res.append((ball, x, y_edge, x, y_edge + hot_dir * PIN_LENGTH)); x += PITCH
             x += GAP * PITCH
         return res
 
@@ -179,20 +181,20 @@ def build(config, output_dir='.', dry_run=False):
         res = []; y = y_start
         for g in groups:
             for ball in g[1]:
-                res.append((ball, x_edge, y, x_edge + hot_dir * 30, y)); y += PITCH
+                res.append((ball, x_edge, y, x_edge + hot_dir * PIN_LENGTH, y)); y += PITCH
             y += GAP * PITCH
         return res
 
     def place_x_line(balls, y_edge, hot_dir, x_start):
         res = []; x = x_start
         for ball in balls:
-            res.append((ball, x, y_edge, x, y_edge + hot_dir * 30)); x += PITCH
+            res.append((ball, x, y_edge, x, y_edge + hot_dir * PIN_LENGTH)); x += PITCH
         return res
 
     def place_y_line(balls, x_edge, hot_dir, y_start):
         res = []; y = y_start
         for ball in balls:
-            res.append((ball, x_edge, y, x_edge + hot_dir * 30, y)); y += PITCH
+            res.append((ball, x_edge, y, x_edge + hot_dir * PIN_LENGTH, y)); y += PITCH
         return res
 
     # --- 布局：分组或连续，由 layout_style 决定 ---
@@ -231,7 +233,7 @@ def build(config, output_dir='.', dry_run=False):
             if side not in ('TOP','BOT','LEFT','RIGHT') or not isinstance(v,int) or isinstance(v,bool) or v%10 or not 10<=v<=limit-10:
                 raise ValueError(f'{ball}：位置必须在框边内，且为 10 MIL 整数倍')
             sx,sy={'TOP':(v,0),'BOT':(v,H),'LEFT':(0,v),'RIGHT':(W,v)}[side]
-            dx,dy={'TOP':(0,-30),'BOT':(0,30),'LEFT':(-30,0),'RIGHT':(30,0)}[side]
+            dx,dy={'TOP':(0,-PIN_LENGTH),'BOT':(0,PIN_LENGTH),'LEFT':(-PIN_LENGTH,0),'RIGHT':(PIN_LENGTH,0)}[side]
             placed.append((ball,sx,sy,sx+dx,sy+dy))
         if len({(p[3],p[4]) for p in placed})!=len(placed):
             raise ValueError('引脚连接点重叠，请换一个 10 MIL 格点')

@@ -1,0 +1,801 @@
+{
+  "revision": 1,
+  "parts": [
+    {
+      "device": "R0402_CRCW",
+      "category": "resistor",
+      "manufacturer": "Vishay",
+      "body": [
+        1,
+        0.5
+      ],
+      "body_max": [
+        1.05,
+        0.55
+      ],
+      "model_height": 0.35,
+      "height_min": 0.3,
+      "height_max": 0.39999999999999997,
+      "pad": [
+        0.6,
+        0.6
+      ],
+      "gap": 0.45,
+      "terminal": {
+        "bottom_length": 0.25,
+        "top_length": 0.2,
+        "width": 0.5,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-crcw.pdf",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "sha256": "fedfd3e2a41ebdb4ce60cc8fef62143af63dc5ac323181854c48736095e2e5a1",
+        "mechanical_page": 11,
+        "land_page": 11
+      },
+      "style": "chip",
+      "notes": "CRCW e3 reflow recommendation; body nominal and tolerances from p11. Termination plating thickness and film appearance are visual presets."
+    },
+    {
+      "device": "R0603_CRCW",
+      "category": "resistor",
+      "manufacturer": "Vishay",
+      "body": [
+        1.55,
+        0.85
+      ],
+      "body_max": [
+        1.6500000000000001,
+        0.95
+      ],
+      "model_height": 0.45,
+      "height_min": 0.4,
+      "height_max": 0.5,
+      "pad": [
+        0.75,
+        1.0
+      ],
+      "gap": 0.75,
+      "terminal": {
+        "bottom_length": 0.3,
+        "top_length": 0.3,
+        "width": 0.85,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-crcw.pdf",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "sha256": "fedfd3e2a41ebdb4ce60cc8fef62143af63dc5ac323181854c48736095e2e5a1",
+        "mechanical_page": 11,
+        "land_page": 11
+      },
+      "style": "chip",
+      "notes": "CRCW e3 reflow recommendation; body nominal and tolerances from p11. Termination plating thickness and film appearance are visual presets."
+    },
+    {
+      "device": "R0805_CRCW",
+      "category": "resistor",
+      "manufacturer": "Vishay",
+      "body": [
+        2.0,
+        1.25
+      ],
+      "body_max": [
+        2.2,
+        1.4
+      ],
+      "model_height": 0.5,
+      "height_min": 0.4,
+      "height_max": 0.6,
+      "pad": [
+        0.95,
+        1.45
+      ],
+      "gap": 1.0,
+      "terminal": {
+        "bottom_length": 0.3,
+        "top_length": 0.3,
+        "width": 1.25,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-crcw.pdf",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "sha256": "fedfd3e2a41ebdb4ce60cc8fef62143af63dc5ac323181854c48736095e2e5a1",
+        "mechanical_page": 11,
+        "land_page": 11
+      },
+      "style": "chip",
+      "notes": "CRCW e3 reflow recommendation; body nominal and tolerances from p11. Termination plating thickness and film appearance are visual presets."
+    },
+    {
+      "device": "R1206_CRCW",
+      "category": "resistor",
+      "manufacturer": "Vishay",
+      "body": [
+        3.2,
+        1.6
+      ],
+      "body_max": [
+        3.3000000000000003,
+        1.75
+      ],
+      "model_height": 0.55,
+      "height_min": 0.5,
+      "height_max": 0.6000000000000001,
+      "pad": [
+        1.05,
+        1.8
+      ],
+      "gap": 1.5,
+      "terminal": {
+        "bottom_length": 0.45,
+        "top_length": 0.4,
+        "width": 1.6,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-crcw.pdf",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "sha256": "fedfd3e2a41ebdb4ce60cc8fef62143af63dc5ac323181854c48736095e2e5a1",
+        "mechanical_page": 11,
+        "land_page": 11
+      },
+      "style": "chip",
+      "notes": "CRCW e3 reflow recommendation; body nominal and tolerances from p11. Termination plating thickness and film appearance are visual presets."
+    },
+    {
+      "device": "R1210_CRCW",
+      "category": "resistor",
+      "manufacturer": "Vishay",
+      "body": [
+        3.2,
+        2.5
+      ],
+      "body_max": [
+        3.4000000000000004,
+        2.7
+      ],
+      "model_height": 0.55,
+      "height_min": 0.5,
+      "height_max": 0.6000000000000001,
+      "pad": [
+        1.1,
+        2.8
+      ],
+      "gap": 1.7,
+      "terminal": {
+        "bottom_length": 0.45,
+        "top_length": 0.4,
+        "width": 2.5,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-crcw.pdf",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "sha256": "fedfd3e2a41ebdb4ce60cc8fef62143af63dc5ac323181854c48736095e2e5a1",
+        "mechanical_page": 11,
+        "land_page": 11
+      },
+      "style": "chip",
+      "notes": "CRCW e3 reflow recommendation; body nominal and tolerances from p11. Termination plating thickness and film appearance are visual presets."
+    },
+    {
+      "device": "R2010_CRCW",
+      "category": "resistor",
+      "manufacturer": "Vishay",
+      "body": [
+        5.0,
+        2.5
+      ],
+      "body_max": [
+        5.15,
+        2.65
+      ],
+      "model_height": 0.6,
+      "height_min": 0.5,
+      "height_max": 0.7,
+      "pad": [
+        1.45,
+        2.8
+      ],
+      "gap": 3.5,
+      "terminal": {
+        "bottom_length": 0.6,
+        "top_length": 0.6,
+        "width": 2.5,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-crcw.pdf",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "sha256": "fedfd3e2a41ebdb4ce60cc8fef62143af63dc5ac323181854c48736095e2e5a1",
+        "mechanical_page": 11,
+        "land_page": 11
+      },
+      "style": "chip",
+      "notes": "CRCW e3 reflow recommendation; body nominal and tolerances from p11. Termination plating thickness and film appearance are visual presets."
+    },
+    {
+      "device": "R2512_CRCW",
+      "category": "resistor",
+      "manufacturer": "Vishay",
+      "body": [
+        6.3,
+        3.15
+      ],
+      "body_max": [
+        6.5,
+        3.3
+      ],
+      "model_height": 0.6,
+      "height_min": 0.5,
+      "height_max": 0.7,
+      "pad": [
+        1.45,
+        3.5
+      ],
+      "gap": 4.75,
+      "terminal": {
+        "bottom_length": 0.6,
+        "top_length": 0.6,
+        "width": 3.15,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-crcw.pdf",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "sha256": "fedfd3e2a41ebdb4ce60cc8fef62143af63dc5ac323181854c48736095e2e5a1",
+        "mechanical_page": 11,
+        "land_page": 11
+      },
+      "style": "chip",
+      "notes": "CRCW e3 reflow recommendation; body nominal and tolerances from p11. Termination plating thickness and film appearance are visual presets."
+    },
+    {
+      "device": "C0402_VJ",
+      "category": "capacitor",
+      "manufacturer": "Vishay Vitramon",
+      "body": [
+        1.0,
+        0.5
+      ],
+      "body_max": [
+        1.1,
+        0.6
+      ],
+      "model_height": 0.6,
+      "height_min": 0,
+      "height_max": 0.6,
+      "pad": [
+        0.5,
+        0.5
+      ],
+      "gap": 0.4,
+      "terminal": {
+        "bottom_length": 0.255,
+        "top_length": 0.255,
+        "width": 0.5,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-mlcc.pdf",
+        "url": "https://www.vishay.com/docs/45199/vjcommercialseries.pdf",
+        "sha256": "6c9b40c81d312ba6dbe9d0a4e687ae18185efeebf8cb98e6d709020efa550211",
+        "mechanical_page": 4,
+        "land_page": 15
+      },
+      "style": "chip",
+      "notes": "VJ commercial X/Ni termination, not B/polymer. PDF p4 gives only maximum thickness; 3D uses that maximum height envelope, NOT a typical individual MPN height. Terminal length is midpoint of p4 min/max, not a datasheet typical value. PCB per appended doc45268 p15."
+    },
+    {
+      "device": "C0603_VJ",
+      "category": "capacitor",
+      "manufacturer": "Vishay Vitramon",
+      "body": [
+        1.6,
+        0.8
+      ],
+      "body_max": [
+        1.75,
+        0.9500000000000001
+      ],
+      "model_height": 0.97,
+      "height_min": 0,
+      "height_max": 0.97,
+      "pad": [
+        1.0,
+        0.9
+      ],
+      "gap": 1.0,
+      "terminal": {
+        "bottom_length": 0.42500000000000004,
+        "top_length": 0.42500000000000004,
+        "width": 0.8,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-mlcc.pdf",
+        "url": "https://www.vishay.com/docs/45199/vjcommercialseries.pdf",
+        "sha256": "6c9b40c81d312ba6dbe9d0a4e687ae18185efeebf8cb98e6d709020efa550211",
+        "mechanical_page": 4,
+        "land_page": 15
+      },
+      "style": "chip",
+      "notes": "VJ commercial X/Ni termination, not B/polymer. PDF p4 gives only maximum thickness; 3D uses that maximum height envelope, NOT a typical individual MPN height. Terminal length is midpoint of p4 min/max, not a datasheet typical value. PCB per appended doc45268 p15."
+    },
+    {
+      "device": "C0805_VJ",
+      "category": "capacitor",
+      "manufacturer": "Vishay Vitramon",
+      "body": [
+        2.0,
+        1.25
+      ],
+      "body_max": [
+        2.2,
+        1.45
+      ],
+      "model_height": 1.45,
+      "height_min": 0,
+      "height_max": 1.45,
+      "pad": [
+        1.2,
+        1.3
+      ],
+      "gap": 1.0,
+      "terminal": {
+        "bottom_length": 0.505,
+        "top_length": 0.505,
+        "width": 1.25,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-mlcc.pdf",
+        "url": "https://www.vishay.com/docs/45199/vjcommercialseries.pdf",
+        "sha256": "6c9b40c81d312ba6dbe9d0a4e687ae18185efeebf8cb98e6d709020efa550211",
+        "mechanical_page": 4,
+        "land_page": 15
+      },
+      "style": "chip",
+      "notes": "VJ commercial X/Ni termination, not B/polymer. PDF p4 gives only maximum thickness; 3D uses that maximum height envelope, NOT a typical individual MPN height. Terminal length is midpoint of p4 min/max, not a datasheet typical value. PCB per appended doc45268 p15."
+    },
+    {
+      "device": "C1206_VJ",
+      "category": "capacitor",
+      "manufacturer": "Vishay Vitramon",
+      "body": [
+        3.2,
+        1.6
+      ],
+      "body_max": [
+        3.45,
+        1.85
+      ],
+      "model_height": 1.7,
+      "height_min": 0,
+      "height_max": 1.7,
+      "pad": [
+        1.2,
+        1.8
+      ],
+      "gap": 2.1,
+      "terminal": {
+        "bottom_length": 0.505,
+        "top_length": 0.505,
+        "width": 1.6,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-mlcc.pdf",
+        "url": "https://www.vishay.com/docs/45199/vjcommercialseries.pdf",
+        "sha256": "6c9b40c81d312ba6dbe9d0a4e687ae18185efeebf8cb98e6d709020efa550211",
+        "mechanical_page": 4,
+        "land_page": 15
+      },
+      "style": "chip",
+      "notes": "VJ commercial X/Ni termination, not B/polymer. PDF p4 gives only maximum thickness; 3D uses that maximum height envelope, NOT a typical individual MPN height. Terminal length is midpoint of p4 min/max, not a datasheet typical value. PCB per appended doc45268 p15."
+    },
+    {
+      "device": "C1210_VJ",
+      "category": "capacitor",
+      "manufacturer": "Vishay Vitramon",
+      "body": [
+        3.2,
+        2.5
+      ],
+      "body_max": [
+        3.45,
+        2.75
+      ],
+      "model_height": 1.7,
+      "height_min": 0,
+      "height_max": 1.7,
+      "pad": [
+        1.3,
+        2.8
+      ],
+      "gap": 1.9,
+      "terminal": {
+        "bottom_length": 0.505,
+        "top_length": 0.505,
+        "width": 2.5,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-mlcc.pdf",
+        "url": "https://www.vishay.com/docs/45199/vjcommercialseries.pdf",
+        "sha256": "6c9b40c81d312ba6dbe9d0a4e687ae18185efeebf8cb98e6d709020efa550211",
+        "mechanical_page": 4,
+        "land_page": 15
+      },
+      "style": "chip",
+      "notes": "VJ commercial X/Ni termination, not B/polymer. PDF p4 gives only maximum thickness; 3D uses that maximum height envelope, NOT a typical individual MPN height. Terminal length is midpoint of p4 min/max, not a datasheet typical value. PCB per appended doc45268 p15."
+    },
+    {
+      "device": "C1808_VJ",
+      "category": "capacitor",
+      "manufacturer": "Vishay Vitramon",
+      "body": [
+        4.57,
+        2.03
+      ],
+      "body_max": [
+        4.87,
+        2.28
+      ],
+      "model_height": 2.18,
+      "height_min": 0,
+      "height_max": 2.18,
+      "pad": [
+        1.5,
+        2.4
+      ],
+      "gap": 3.0,
+      "terminal": {
+        "bottom_length": 0.575,
+        "top_length": 0.575,
+        "width": 2.03,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-mlcc.pdf",
+        "url": "https://www.vishay.com/docs/45199/vjcommercialseries.pdf",
+        "sha256": "6c9b40c81d312ba6dbe9d0a4e687ae18185efeebf8cb98e6d709020efa550211",
+        "mechanical_page": 4,
+        "land_page": 15
+      },
+      "style": "chip",
+      "notes": "VJ commercial X/Ni termination, not B/polymer. PDF p4 gives only maximum thickness; 3D uses that maximum height envelope, NOT a typical individual MPN height. Terminal length is midpoint of p4 min/max, not a datasheet typical value. PCB per appended doc45268 p15."
+    },
+    {
+      "device": "C1812_VJ",
+      "category": "capacitor",
+      "manufacturer": "Vishay Vitramon",
+      "body": [
+        4.5,
+        3.2
+      ],
+      "body_max": [
+        4.8,
+        3.4000000000000004
+      ],
+      "model_height": 2.18,
+      "height_min": 0,
+      "height_max": 2.18,
+      "pad": [
+        1.5,
+        3.6
+      ],
+      "gap": 3.0,
+      "terminal": {
+        "bottom_length": 0.575,
+        "top_length": 0.575,
+        "width": 3.2,
+        "thickness": 0.015
+      },
+      "source": {
+        "file": "vishay-mlcc.pdf",
+        "url": "https://www.vishay.com/docs/45199/vjcommercialseries.pdf",
+        "sha256": "6c9b40c81d312ba6dbe9d0a4e687ae18185efeebf8cb98e6d709020efa550211",
+        "mechanical_page": 4,
+        "land_page": 15
+      },
+      "style": "chip",
+      "notes": "VJ commercial X/Ni termination, not B/polymer. PDF p4 gives only maximum thickness; 3D uses that maximum height envelope, NOT a typical individual MPN height. Terminal length is midpoint of p4 min/max, not a datasheet typical value. PCB per appended doc45268 p15."
+    },
+    {
+      "device": "L_SRN2012T_4R7K",
+      "category": "inductor",
+      "manufacturer": "Bourns",
+      "body": [
+        2.0,
+        1.2
+      ],
+      "body_max": [
+        2.2,
+        1.4
+      ],
+      "model_height": 1.2,
+      "height_min": 0,
+      "height_max": 1.2,
+      "pad": [
+        1.02,
+        1.78
+      ],
+      "gap": 0.76,
+      "terminal": {
+        "bottom_length": 0.7,
+        "top_length": 0,
+        "width": 1.2,
+        "thickness": 0.03
+      },
+      "source": {
+        "file": "srn2012.pdf",
+        "url": "https://www.bourns.com/docs/product-datasheets/srn2012t.pdf",
+        "sha256": "e65a8a746bf133e89d0c9f852fef935a5187973ad651868b1df6a49e4dc869e5",
+        "mechanical_page": 1,
+        "land_page": 2
+      },
+      "style": "drum",
+      "notes": "Height is manufacturer maximum, used for 3D envelope; no typical height specified. Ferrite flange/core side profile and winding coating are sourced visual approximations; layer thicknesses and tiny corners are not dimensioned. No internal turns inferred."
+    },
+    {
+      "device": "L_SRN2512_1R0M",
+      "category": "inductor",
+      "manufacturer": "Bourns",
+      "body": [
+        2.5,
+        2.0
+      ],
+      "body_max": [
+        2.7,
+        2.35
+      ],
+      "model_height": 1.2,
+      "height_min": 0,
+      "height_max": 1.2,
+      "pad": [
+        1.05,
+        2.4
+      ],
+      "gap": 0.8,
+      "terminal": {
+        "bottom_length": 0.85,
+        "top_length": 0,
+        "width": 2.0,
+        "thickness": 0.03
+      },
+      "source": {
+        "file": "bourns-srn2512.pdf",
+        "url": "https://www.bourns.com/docs/product-datasheets/srn2512.pdf",
+        "sha256": "100e941d8254a1bced36f9d468c2c40912ecba7aeeebe3b6fcce64beb5480823",
+        "mechanical_page": 1,
+        "land_page": 1
+      },
+      "style": "drum",
+      "notes": "Height is manufacturer maximum, used for 3D envelope; no typical height specified. Ferrite flange/core side profile and winding coating are sourced visual approximations; layer thicknesses and tiny corners are not dimensioned. No internal turns inferred."
+    },
+    {
+      "device": "L_SRN3015_4R7M",
+      "category": "inductor",
+      "manufacturer": "Bourns",
+      "body": [
+        3.0,
+        3.0
+      ],
+      "body_max": [
+        3.1,
+        3.1
+      ],
+      "model_height": 1.5,
+      "height_min": 0,
+      "height_max": 1.5,
+      "pad": [
+        1.0,
+        2.7
+      ],
+      "gap": 1.2,
+      "terminal": {
+        "bottom_length": 0.9,
+        "top_length": 0,
+        "width": 2.7,
+        "thickness": 0.03
+      },
+      "source": {
+        "file": "srn3015.pdf",
+        "url": "https://www.bourns.com/docs/product-datasheets/srn3015.pdf",
+        "sha256": "b19689c1e5862ea9d5ff337ab0d17c9cb04c7c63de7da012e4c0379e833903bf",
+        "mechanical_page": 1,
+        "land_page": 1
+      },
+      "style": "drum",
+      "notes": "Height is manufacturer maximum, used for 3D envelope; no typical height specified. Ferrite flange/core side profile and winding coating are sourced visual approximations; layer thicknesses and tiny corners are not dimensioned. No internal turns inferred."
+    },
+    {
+      "device": "L_SRN4018_4R7M",
+      "category": "inductor",
+      "manufacturer": "Bourns",
+      "body": [
+        4.0,
+        4.0
+      ],
+      "body_max": [
+        4.2,
+        4.2
+      ],
+      "model_height": 1.8,
+      "height_min": 0,
+      "height_max": 1.8,
+      "pad": [
+        1.5,
+        3.6
+      ],
+      "gap": 1.55,
+      "terminal": {
+        "bottom_length": 1.3,
+        "top_length": 0,
+        "width": 3.6,
+        "thickness": 0.03
+      },
+      "source": {
+        "file": "bourns-srn4018.pdf",
+        "url": "https://www.bourns.com/docs/product-datasheets/srn4018.pdf",
+        "sha256": "8cffe3853192642919e7ffb5e6b09039e2daab067ca60c0084657ef103b7e3b5",
+        "mechanical_page": 1,
+        "land_page": 1
+      },
+      "style": "drum",
+      "notes": "Height is manufacturer maximum, used for 3D envelope; no typical height specified. Ferrite flange/core side profile and winding coating are sourced visual approximations; layer thicknesses and tiny corners are not dimensioned. No internal turns inferred."
+    },
+    {
+      "device": "D_1N4148W_SOD123",
+      "category": "diode",
+      "manufacturer": "Diodes Incorporated",
+      "body": [
+        2.65,
+        1.55
+      ],
+      "body_max": [
+        2.85,
+        1.7
+      ],
+      "model_height": 1.05,
+      "height_min": 1.0,
+      "height_max": 1.35,
+      "pad": [
+        0.9,
+        0.95
+      ],
+      "gap": 2.25,
+      "terminal": {
+        "overall": 3.65,
+        "width": 0.57,
+        "thickness": 0.11,
+        "foot_length": 0.3,
+        "standoff": 0.05
+      },
+      "source": {
+        "file": "diodes-1n4148w.pdf",
+        "url": "https://www.diodes.com/assets/Datasheets/BAV16W_1N4148W.pdf",
+        "sha256": "f3bdb7a3d28c04d0148c300ddb0307000291dfce3a1deef62b3906383371a3f1",
+        "mechanical_page": 4,
+        "land_page": 4
+      },
+      "style": "diode",
+      "notes": "PCB pin1=K/cathode at left, pin2=A; datasheet band orientation matched. Unspecified typical dimensions use explicit min/max midpoints. Rounded lead bends/body bevels/stripe width are appearance approximations. SMA copper uses stated MIN1.52x1.68 and MAXgap1.88; resulting outer5.28 equals REF."
+    },
+    {
+      "device": "D_1N5819HW_SOD123",
+      "category": "diode",
+      "manufacturer": "Diodes Incorporated",
+      "body": [
+        2.65,
+        1.55
+      ],
+      "body_max": [
+        2.85,
+        1.7
+      ],
+      "model_height": 1.05,
+      "height_min": 1.0,
+      "height_max": 1.35,
+      "pad": [
+        0.9,
+        0.95
+      ],
+      "gap": 2.25,
+      "terminal": {
+        "overall": 3.65,
+        "width": 0.57,
+        "thickness": 0.11,
+        "foot_length": 0.3,
+        "standoff": 0.05
+      },
+      "source": {
+        "file": "diodes-b5819w.pdf",
+        "url": "https://www.diodes.com/assets/Datasheets/1N5819HW.pdf",
+        "sha256": "371daa4aa099a56edf57a935d515a054e2bde9f8547437091a8c5e062c17603b",
+        "mechanical_page": 4,
+        "land_page": 4
+      },
+      "style": "diode",
+      "notes": "PCB pin1=K/cathode at left, pin2=A; datasheet band orientation matched. Unspecified typical dimensions use explicit min/max midpoints. Rounded lead bends/body bevels/stripe width are appearance approximations. SMA copper uses stated MIN1.52x1.68 and MAXgap1.88; resulting outer5.28 equals REF."
+    },
+    {
+      "device": "D_1N4148WT_SOD523",
+      "category": "diode",
+      "manufacturer": "Diodes Incorporated",
+      "body": [
+        1.2,
+        0.8
+      ],
+      "body_max": [
+        1.25,
+        0.85
+      ],
+      "model_height": 0.6,
+      "height_min": 0.55,
+      "height_max": 0.65,
+      "pad": [
+        0.6,
+        0.7
+      ],
+      "gap": 0.8,
+      "terminal": {
+        "overall": 1.6,
+        "width": 0.3,
+        "thickness": 0.14,
+        "foot_length": 0.2,
+        "standoff": 0.14
+      },
+      "source": {
+        "file": "diodes-sod523.pdf",
+        "url": "https://www.diodes.com/assets/Datasheets/1N4148WT.pdf",
+        "sha256": "4f88f097f1722bf8dff035db0657ba97a9e215d1e7800484b7c22abab32a68b7",
+        "mechanical_page": 4,
+        "land_page": 4
+      },
+      "style": "diode",
+      "notes": "PCB pin1=K/cathode at left, pin2=A; datasheet band orientation matched. Unspecified typical dimensions use explicit min/max midpoints. Rounded lead bends/body bevels/stripe width are appearance approximations. SMA copper uses stated MIN1.52x1.68 and MAXgap1.88; resulting outer5.28 equals REF."
+    },
+    {
+      "device": "D_SS14_SMA",
+      "category": "diode",
+      "manufacturer": "Vishay",
+      "body": [
+        4.245,
+        2.665
+      ],
+      "body_max": [
+        4.5,
+        2.79
+      ],
+      "model_height": 2.135,
+      "height_min": 1.98,
+      "height_max": 2.29,
+      "pad": [
+        1.52,
+        1.68
+      ],
+      "gap": 1.88,
+      "terminal": {
+        "overall": 5.105,
+        "width": 1.45,
+        "thickness": 0.2285,
+        "foot_length": 1.14,
+        "standoff": 0.1015
+      },
+      "source": {
+        "file": "vishay-ss14.pdf",
+        "url": "https://www.vishay.com/docs/88746/ss12.pdf",
+        "sha256": "b32a2d93d2d2cf9f48d6cf678ab03713956b7501029c0424c6a554425df562da",
+        "mechanical_page": 4,
+        "land_page": 4
+      },
+      "style": "diode",
+      "notes": "PCB pin1=K/cathode at left, pin2=A; datasheet band orientation matched. Unspecified typical dimensions use explicit min/max midpoints. Rounded lead bends/body bevels/stripe width are appearance approximations. SMA copper uses stated MIN1.52x1.68 and MAXgap1.88; resulting outer5.28 equals REF."
+    }
+  ]
+}

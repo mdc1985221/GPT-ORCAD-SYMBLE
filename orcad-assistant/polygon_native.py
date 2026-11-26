@@ -7,7 +7,7 @@ BASE=Path(__file__).parent
 def pt(v):return '(list '+ ' '.join(f'{n:.5f}' for n in v)+')'
 def points(v):return '(list '+' '.join(pt(q) for q in v+[v[0]])+')'
 
-def run(folder,stem,code,executable,tier='pcb'):
+def run(folder,stem,code,executable,tier='pcb',design=None):
     folder=Path(folder);marker=folder/(stem+'-complete.txt');marker.unlink(missing_ok=True)
     (folder/(stem+'.il')).write_text(code,encoding='ascii')
     script='\n'.join(['scriptmode +invisible +noinfo','skill \'(axlSetVariable "NOCONFIRM" t)\'',f'skill \'(load "{stem}.il")\'',f'skill \'(let ((o (outfile "{marker.name}"))) (fprintf o "DONE") (close o))\'','exit',''])
@@ -15,6 +15,7 @@ def run(folder,stem,code,executable,tier='pcb'):
     with (folder/(stem+'.log')).open('wb') as log:
         if tier not in (None,'pcb','designer','expert','gxl'):raise ValueError('Unsupported Allegro tier')
         args=[executable]+(['-'+tier] if tier else [])+['-s',stem+'.scr','-nograph']
+        if design is not None:args.append(str(Path(design).resolve()))
         p=subprocess.Popen(args,cwd=folder,stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         try:
             deadline=time.monotonic()+600
@@ -91,11 +92,16 @@ def prepare(spec,output):
         code += ['))',f'(setq ps (axlDBCreatePadStack "{assets[p["id"]]}" nil pad_list t))','(unless ps (error "Padstack creation failed"))',f'(unless (axlDBCreatePin ps {pt(p["xy"])} '+('nil' if p.get('role')=='mounting' else f'(make_axlPinText ?number "{p["id"]}" ?offset (list 0.0 -0.0267) ?text (make_axlTextOrientation ?textBlock "1" ?rotation 0.0 ?justify "center"))')+') (error "Pin failed"))', '(unless (axlPadstackToDisk ps->name) (error "PAD export failed"))']
     w,h=spec['body'];e=spec['courtyard_excess']
     if spec.get('draw_body',True):code.append(f'(axlDBCreateLine {points([[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]])} .03 "PACKAGE GEOMETRY/ASSEMBLY_TOP")')
-    if spec.get('family')=='connector':
+    if spec.get('family') in ('connector','standard_smd'):
         coords=[xy for pad in spec['pads'] for xy in pad['copper'][0]]
+        if spec.get('family')=='standard_smd':
+            mw,mh=spec.get('body_max',spec['body']);coords+=[[-mw/2,-mh/2],[mw/2,mh/2]]
         lo=[min(q[0] for q in coords)-e,min(q[1] for q in coords)-e]
         hi=[max(q[0] for q in coords)+e,max(q[1] for q in coords)+e]
     else:lo=[-w/2-e,-h/2-e];hi=[w/2+e,h/2+e]
+    for segment in spec.get('silkscreen_segments',[]):
+        vertices='(list '+' '.join(pt(v) for v in segment)+')'
+        code.append(f'(axlDBCreateLine {vertices} .10 "PACKAGE GEOMETRY/SILKSCREEN_TOP")')
     code += [f'(setq bound (car (axlDBCreateRectangle (list {pt(lo)} {pt(hi)}) t "PACKAGE GEOMETRY/PLACE_BOUND_TOP")))',f'(unless (axlDBAddProp (list bound) (list (list "PACKAGE_HEIGHT_MAX" "{spec["height_max"]}mm") (list "PACKAGE_HEIGHT_MIN" "{spec["height_min"]}mm"))) (error "Height failed"))',
         '(setq tp (axlGetParam "paramTextBlock:2"))','tp->width = .35','tp->height = .5','tp->photoWidth = .15','tp->charSpace = .04','(axlSetParam tp)',f'(axlDBCreateText "#REFDES" {pt([0,h/2+.7])} (make_axlTextOrientation ?textBlock "2" ?rotation 0.0 ?justify "center") "REF DES/SILKSCREEN_TOP")',
         f'(unless (equal (length (axlDBGetDesign)->pins) {len(spec["pads"])}) (error "Pin count mismatch"))',
@@ -145,11 +151,22 @@ def finish(spec,out,progress,executable):
         for p in adir.iterdir():
             if p.suffix.lower() in ('.ssm','.pad','.psm'):shutil.copy2(p,check/p.name)
         # Fresh board, not reopened DRA, verifies actual placement units.
-        code=['(axlDBControl \'drcEnable nil)',f'(axlDBChangeDesignUnits "{unit}" 4)','(axlSetVariable "padpath" (list "."))','(axlSetVariable "psmpath" (list "."))','(setq anchor (quotient 25.4 (axlMKSConvert 1.0 "design" "millimeters")))',f'(unless (axlDBCreateSymbol (list "{spec["name"]}" "PACKAGE") (list anchor anchor)) (error "PSM import failed"))']
+        code=[]
+        if spec.get('family')=='standard_smd' and not (check/'import-complete.txt').is_file():
+            # Use an empty BOARD database; renaming a .dra does not change type.
+            seed=BASE/'templates/footprint/blank_board.brd'
+            if not seed.is_file():raise ValueError('缺少隔离PCB模板，不能跳过实际BOARD导入验证')
+            shutil.copy2(seed,check/'seed.brd')
+            code+=['(unless (axlOpenDesign ?design "seed.brd" ?mode "wf" ?noMru t) (error "BOARD seed open failed"))','(unless (equal (axlDesignType t) "BOARD") (error "Expected BOARD"))',CLEAN]
+        code+=['(axlDBControl \'drcEnable nil)',f'(axlDBChangeDesignUnits "{unit}" 4)']
+        if spec.get('family')=='standard_smd':
+            code+=['(setq limit (quotient 200.0 (axlMKSConvert 1.0 "design" "millimeters")))','(unless (axlDBChangeDesignExtents (list (list (minus limit) (minus limit)) (list limit limit))) (error "BOARD extents failed"))']
+        code+=['(axlSetVariable "padpath" (list "."))','(axlSetVariable "psmpath" (list "."))','(setq anchor (quotient 25.4 (axlMKSConvert 1.0 "design" "millimeters")))',f'(setq placed (car (axlDBCreateSymbol (list "{spec["name"]}" "PACKAGE") (list anchor anchor))))','(unless placed (error "PSM import failed"))']
         # In board context pins belong to the placed package symbol.
-        code.append(read_code().replace('(foreach pin (axlDBGetDesign)->pins','(foreach pin (car (axlDBGetDesign)->symbols)->pins'))
+        code.append(read_code().replace('(foreach pin (axlDBGetDesign)->pins','(foreach pin placed->pins'))
         progress('隔离 PCB 导入 '+unit+'，回读多边形…')
-        if not (check/'import-complete.txt').is_file():run(check,'import','\n'.join(code),executable)
+        if not (check/'import-complete.txt').is_file():
+            run(check,'import','\n'.join(code),executable,design=check/'seed.brd' if spec.get('family')=='standard_smd' else None)
         check_contours(spec,check/'readback.csv',unit,(25.4,25.4));checks.append(unit)
     names={spec['name'].lower()+'.dra',spec['name'].lower()+'.psm'}|{n.lower()+'.pad' for n in poly.native_assets(spec).values()}|{n.lower()+'.ssm' for n in shapes}
     assets=[p for p in adir.iterdir() if p.name.lower() in names]

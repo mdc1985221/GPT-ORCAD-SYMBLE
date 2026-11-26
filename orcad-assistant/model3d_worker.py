@@ -9,6 +9,9 @@ import cadquery as cq
 
 def generate(folder):
     p=json.loads((folder/'input.json').read_text(encoding='utf8'))
+    if p.get('kind')=='standard_smd':
+        from standard_smd import generate as standard_generate
+        return standard_generate(folder)
     if p.get('kind')=='polygon_smd':
         from polygon_model3d import generate as polygon_generate
         return polygon_generate(folder)

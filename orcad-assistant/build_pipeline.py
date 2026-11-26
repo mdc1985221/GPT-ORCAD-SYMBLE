@@ -168,7 +168,7 @@ def build(project, env, output_root, progress=lambda msg: None):
     try:
         progress('正在生成构建脚本…')
         script, golden = core.generator.build(cfg, str(staging))
-        core.export_svg(cfg, expected, staging / 'preview.svg')
+        core.export_svg(cfg, expected, staging / 'preview.svg',project.get('symbol_graphics'))
         core.atomic_json(staging / 'project.json', project)
         progress('正在调用 OrCAD 构建符号…')
         text = run_tcl(script, staging, env, log)
@@ -177,6 +177,10 @@ def build(project, env, output_root, progress=lambda msg: None):
             raise RuntimeError('OrCAD 未生成完整的新文件')
         progress('正在校准外框…')
         frame = patch_frame(olb, cfg['device'], cfg['W'], cfg['H'])
+        graphics=None
+        if project.get('symbol_graphics'):
+            from symbol_graphics import apply_and_verify
+            graphics=apply_and_verify(olb,project,env,log)
         progress('正在重新打开 OLB，逐脚验证…')
         actual = readback(olb, cfg, env, log)
         if len(actual) != len(expected) or set(actual) != set(expected):
@@ -186,6 +190,9 @@ def build(project, env, output_root, progress=lambda msg: None):
         report = dict(status='PASS', pins=len(actual), checks=['编号与名称配对', '电气类型', '全部端点坐标', '单一 device', 'PCB Footprint', '外框二进制回读'],
                       frame=frame, source_review='user_confirmed' if project.get('sources') else 'manual_input',
                       limitation='布局预览不是 Capture 截图；字体显示和实际网表/PCB 导入需在目标工程检查。')
+        if graphics:
+            report['graphics']=graphics;report['frame']['visible']=False
+            report['checks']=[s for s in report['checks'] if '外框' not in s]+['自定义符号图形逐线原生回读']
         report['file_hashes']=core.artifact_hashes(staging,[olb,staging/'project.json'])
         core.atomic_json(staging / 'verification.json', report)
         destination = root / (cfg['device'] + '-' + token)

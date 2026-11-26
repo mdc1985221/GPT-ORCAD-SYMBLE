@@ -1,5 +1,26 @@
 # GPT-ORCAD-SYMBLE · 器件符号与 PCB 封装助手
 
+<!-- standard-smd-20261126 -->
+## 2026-11-26：常用贴片库与阻容符号
+
+首批22套经原厂资料核对的贴片规则：电阻7、电容7、电感4、二极管4。生成并验证原理OLB、Allegro PCB与STEP后写入本地分类库，关联归档的规格书。
+
+- 仅阻容符号中间写实际封装代号（0402/0603等），隐藏PIN NAME，保留脚号和电气连接，原生引脚为Short；电感、二极管和晶体管不加中间文字。
+- 3D补充端头包覆圆角、陶瓷/涂层及阴极带，预览几何来自保存STEP重导入。未标尺寸的外观与工艺值明确属于预设。
+- 117项Python测试、22套OLB/PCB/STEP原生验证及桌面版原理/PCB/3D/PDF逐条预览检查通过；不等于目标设计与制造验收完成。
+
+![实际阻容预览](docs/images/rc-symbols-20261126.png)
+
+```powershell
+python orcad-assistant/build_standard_smd_library.py --list
+python orcad-assistant/build_standard_smd_library.py --device R0402_CRCW
+```
+
+重建会下载匹配哈希的原厂PDF，需要本机Cadence及CadQuery环境；已有PDF可用`--datasheets`指定目录。省略`--device`重建首批22套。系列模板不代表任意同尺寸器件可互换。0201尚不在本批生成清单。
+
+[首批清单、来源、符号规则、验证与限制](常用贴片器件库-首批22套说明.md)。本次提交源码、规则、必要空白BOARD模板和说明，不含用户PDF、已生成私人库、EXE或第三方3D下载候选。main源码比旧preview标签更新；升级请保留workspace。
+
+
 <!-- library-accumulation-20261126 -->
 ## 2026-11-26：器件库积累与完整版本去重
 

@@ -7,7 +7,7 @@ async function model3dDialog(itemId=null){
  // Symbol-only saved versions may still contain a mechanical snapshot.
  if(!s){toast('请先载入编辑，补齐 CSP / BGA 机械尺寸');return}
  if(s.family==='connector'){toast('此连接器当前提供符号与PCB；3D需补齐本体相对焊盘位置后建模');return}
- if(s.kind==='polygon_smd'){polygonModelDialog(s,itemId);return}
+ if(s.family==='standard_smd'){standardModelDialog(s,itemId);return}if(s.kind==='polygon_smd'){polygonModelDialog(s,itemId);return}
  const options=detail?(detail.model3d?.plan||{}):(state.project.model3d||{});
  dialog(`<h2>CSP / BGA 简化 3D 模型</h2><p>本体 ${s.body.join(' × ')} mm · 球径 ${s.ball_dia} mm。XY 与 PCB 一致，Z=0 为板面接触点，向上为正。</p><div class="pcb-fields"><div class="field"><label>总高度，包含焊球（mm）</label><input id="model-total" type="number" step="any" value="${esc(options.total_height??s.height_nominal??s.height_max??'')}"></div><div class="field"><label>焊球突出高度（mm）</label><input id="model-ball" type="number" step="any" value="${esc(options.ball_height??s.ball_height??s.ball_dia)}"></div></div><p class="pcb-warning">${s.sensor_array?`将生成感光区域 ${s.sensor_array.join(" × ")} mm、芯片表面、${s.glass_thickness??.4} mm 玻璃及全部焊球。玻璃透明显示；${s.top_to_wafer!=null?`感光面按规格书 C3=${s.top_to_wafer} mm 定位。`:"感光面深度采用外观近似。"}内部支撑结构为简化示意。`:`焊球高度优先取规格书，缺失时暂用球径。生成矩形本体和球冠，不包含玻璃盖板、镜头、倒角及内部结构。`}</p><label class="pcb-check"><input id="model-confirm" type="checkbox"> 我已核对方向及高度，接受此简化模型用于装配参考。</label>${itemId?'':'<label class="pcb-check"><input id="model-enabled" type="checkbox" checked> 后续“符号 + PCB”联合生成时同时生成 STEP</label>'}<div class="actions"><button onclick="closeDialog()">取消</button>${!itemId?'<button id="model-config">仅保存联合生成设置</button>':''}<button class="primary" id="model-generate" ${state.model3d_available?'':'disabled'}>生成并验证 STEP</button></div>${state.model3d_available?'':'<p class="pcb-warning">3D 引擎尚未安装，请按 README 安装可选依赖；OLB 和 PCB 功能不受影响。</p>'}${!itemId&&state.project.model3d_generated?'<button id="model-existing">预览 / 下载已生成模型</button>':''}`);
  if(s.mechanical_dimensions){const rows=Object.values(s.mechanical_dimensions).filter(d=>['C','C1','C2','C3','C4','D','GLASS','a','b'].includes(d.symbol));$('model-total').closest('.pcb-fields').insertAdjacentHTML('afterend',`<details open><summary>规格书机械尺寸 · mm</summary><table><thead><tr><th>尺寸</th><th>最小</th><th>典型</th><th>最大</th><th>来源</th></tr></thead><tbody>${rows.map(d=>`<tr><td>${esc(d.label)} (${esc(d.symbol)})</td><td>${esc(d.min??'—')}</td><td>${esc(d.typ)}</td><td>${esc(d.max??'—')}</td><td>p${esc(d.page)}</td></tr>`).join('')}</tbody></table><p>按典型值建模；最大高度用于装配边界。修改总高或球高属于用户覆盖值。</p></details>`)}
@@ -26,6 +26,11 @@ async function model3dDialog(itemId=null){
 // Studio materials only affect preview. Saved STEP geometry and its colors are
 // left untouched; coatings, metal and light panels below are appearance presets.
 function modelStudioMaterial(name,color,isBall){
+ if(name.startsWith('TERMINAL_'))return {color:color,surface:[.25,1,2]};
+ if(name==='CERAMIC_BODY_APPROX')return {color:color,surface:[.45,0,0]};
+ if(name==='ALUMINA_BODY_APPROX')return {color:color,surface:[.65,0,0]};
+ if(name==='CATHODE_BAND_APPROX')return {color:color,surface:[.7,0,0]};
+ if(name==='RESISTIVE_COATING_APPROX'||name==='MOLDED_BODY_APPROX')return {color:color,surface:[.48,0,0]};
  if(isBall)return {color:[.63,.66,.70],surface:[.22,1,2]};
  if(name==='COVER_GLASS')return {color:[.80,.91,.97],surface:[.08,0,3]};
  if(name==='SENSOR_ARRAY')return {color:[.025,.018,.055],surface:[.16,.55,1]};
@@ -153,4 +158,9 @@ function polygonModelDialog(s,itemId){
  dialog(`<h2>QFN 器件 3D</h2><p>本体 ${s.body.join(' × ')} mm；端子采用 p46 器件机械轮廓，与 p47 PCB 焊盘分开。圆端/角部为简化近似，PIN1 表面标记为外观示意。</p><div class="field"><label>总高度（mm，规格书 ${s.height_min}–${s.height_max}）</label><input id="qfn-model-height" type="number" step=".01" value="${options.total_height??s.height_nominal}"></div><p>${esc(s.terminal_profile.notice)}</p><label><input id="qfn-model-confirm" type="checkbox"> 已核对高度并接受已标注的端子外观近似。</label><div class="actions"><button onclick="closeDialog()">取消</button><button id="qfn-model-build" class="primary">生成并验证 STEP</button></div>${!itemId&&state.project.model3d_generated?'<button id="model-existing">预览 / 下载已生成模型</button>':''}`);
  if($('model-existing'))$('model-existing').onclick=()=>showCurrentModel();
  $('qfn-model-build').onclick=async()=>{if(!$('qfn-model-confirm').checked){toast('请先确认高度与外观近似');return}const opts={confirmed:true,enabled:true,total_height:Number($('qfn-model-height').value),dimension_source:'TI p46 QFN nominal terminals; documented appearance simplifications'};if(!await act({action:'model3d-build',id:itemId,options:opts}))return;closeDialog();while(state.job.busy){await new Promise(r=>setTimeout(r,600));state=await api('/api/state')}if(state.job.error){toast(state.job.error);return}if(itemId){librarySelected=state.model3d_item;await loadLibrary()}else await showCurrentModel()};
+}
+
+function standardModelDialog(s,itemId){
+ dialog(`<h2>贴片器件 3D</h2><p>${esc(s.label)} · 本体 ${s.body.join(' × ')} mm · ${s.height_selection==='maximum_envelope'?'按最大高度包络建模，不代表具体料号典型高度':'机械尺寸按已核对资料取值'}</p><p>${esc(s.standard_recipe.notes)}</p><div class="field"><label>总高度 · mm（不超过 ${s.height_max}）</label><input id="standard-model-height" type="number" step=".01" value="${s.height_nominal}"></div><label><input type="checkbox" id="standard-model-confirm"> 已核对规格书版本和标注的外观近似</label><div class="actions"><button onclick="closeDialog()">取消</button><button id="standard-model-build" class="primary">生成并验证 STEP</button></div>`);
+ $('standard-model-build').onclick=async()=>{if(!$('standard-model-confirm').checked){toast('请先确认高度和外观说明');return}const options={confirmed:true,enabled:true,total_height:Number($('standard-model-height').value)};if(!await act({action:'model3d-build',id:itemId,options}))return;closeDialog();while(state.job.busy){await new Promise(r=>setTimeout(r,600));state=await api('/api/state')}if(state.job.error){toast(state.job.error);return}if(itemId){librarySelected=state.model3d_item;libraryPreview='3d';await loadLibrary()}else await showCurrentModel()};
 }
